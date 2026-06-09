@@ -1,0 +1,208 @@
+export type ServiceType =
+  | "inhumacion"
+  | "cremacion"
+  | "traslado"
+  | "velatorio"
+  | "servicio_completo"
+  | "otro";
+
+export type ProcessStatus =
+  | "recepcion"
+  | "preparacion"
+  | "velatorio"
+  | "traslado"
+  | "ceremonia"
+  | "inhumacion_cremacion"
+  | "completado";
+
+export type ReligiousPreference =
+  | "catolica"
+  | "evangelica"
+  | "judia"
+  | "islamica"
+  | "budista"
+  | "ninguna"
+  | "otra";
+
+export interface FamilyContact {
+  name: string;
+  rut: string;
+  relationship: string;
+  phone: string;
+  email: string;
+  address: string;
+}
+
+export interface Document {
+  id: string;
+  name: string;
+  type:
+    | "defuncion"
+    | "identidad"
+    | "autopsia"
+    | "cremacion"
+    | "traslado"
+    | "otro";
+  url: string;
+  uploadedAt: string;
+  notes?: string;
+}
+
+export interface PaymentRecord {
+  id: string;
+  budgetId?: string;
+  date: string;
+  amount: number;
+  method: "efectivo" | "transferencia" | "debito" | "credito" | "cheque";
+  reference?: string;
+  notes?: string;
+  receivedBy?: string;
+}
+
+export interface BudgetItem {
+  id: string;
+  category: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface DeceasedBudget {
+  id: string;
+  number: string;
+  title: string;
+  sucursal: string;
+  vendedor: string;
+  date: string;
+  items: BudgetItem[];
+  discount: number;
+  tax: number;
+  notes?: string;
+  status: "borrador" | "aprobado" | "facturado";
+}
+
+export interface CatalogItem {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface CatalogCategory {
+  id: string;
+  name: string;
+  items: CatalogItem[];
+}
+
+export type UserRole = "administrador" | "vendedor" | "operario" | "recepcion";
+
+export interface AppUser {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  role: UserRole;
+  sucursal: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface Convenio {
+  id: string;
+  name: string;
+  entity: string;
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string;
+  discountPct: number;
+  description?: string;
+  startDate: string;
+  endDate?: string;
+  active: boolean;
+}
+
+export type TaskStatus = "pendiente" | "en_curso" | "completado" | "cancelado";
+
+export interface ProcessTask {
+  id: string;
+  name: string;
+  description?: string;
+  assignedTo?: string;
+  plannedStart?: string; // ISO datetime
+  plannedEnd?: string; // ISO datetime
+  actualStart?: string;
+  actualEnd?: string;
+  status: TaskStatus;
+  notes?: string;
+  order: number;
+}
+
+export interface DeceasedRecord {
+  id: string;
+  fullName: string;
+  rut: string;
+  birthDate: string;
+  nationality: string;
+  deathDate: string;
+  deathTime: string;
+  deathPlace: string;
+  deathCause?: string;
+  familyContact: FamilyContact;
+  serviceType: ServiceType;
+  status: ProcessStatus;
+  velatorio?: string;
+  velatorioAddress?: string;
+  cemetery?: string;
+  cemeteryAddress?: string;
+  crematorium?: string;
+  crematoriumAddress?: string;
+  religiousPreference: ReligiousPreference;
+  religiousNotes?: string;
+  urgencies?: string;
+  restrictions?: string;
+  sensitiveObservations?: string;
+  documents: Document[];
+  budgets: DeceasedBudget[];
+  payments: PaymentRecord[];
+  tasks: ProcessTask[];
+  createdAt: string;
+  updatedAt: string;
+  assignedStaff?: string;
+}
+
+export interface FuneralService {
+  id: string;
+  deceasedId: string;
+  deceasedName: string;
+  serviceType: ServiceType;
+  startDate: string;
+  endDate: string;
+  location: string;
+  notes?: string;
+  status: "programado" | "en_curso" | "completado" | "cancelado";
+  color?: string;
+}
+
+export interface QuoteItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface Quote {
+  id: string;
+  deceasedId?: string;
+  deceasedName: string;
+  clientName: string;
+  clientPhone: string;
+  clientEmail: string;
+  items: QuoteItem[];
+  subtotal: number;
+  discount: number;
+  tax: number;
+  total: number;
+  notes?: string;
+  status: "borrador" | "enviada" | "aceptada" | "rechazada";
+  createdAt: string;
+  validUntil: string;
+}
