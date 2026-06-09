@@ -95,11 +95,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     IS_ONLINE ? [] : mockCatalog,
   );
 
-  /* ── load from Supabase on mount + real-time subscriptions ── */
+  /* ── load from Supabase on mount + polling every 3 seconds ── */
   useEffect(() => {
     if (!IS_ONLINE) return;
 
-    const loadData = async () => {
+    const loadAllData = async () => {
       try {
         const [dec, svc, usr, conv, cat] = await Promise.all([
           dbDeceased.getAll(),
@@ -113,78 +113,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setUsers(usr);
         setConvenios(conv);
         setCatalog(cat.length ? cat : mockCatalog);
+        setLoading(false);
       } catch (e) {
         console.error("Supabase load error:", e);
-      } finally {
         setLoading(false);
       }
     };
 
-    // Load initial data
-    void loadData();
+    // Load immediately
+    void loadAllData();
 
-    // Subscribe to real-time changes
-    const subscriptions = [
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase as any)
-        .from("deceased_records")
-        .on("*", () => {
-          // Reload deceased when any change happens
-          dbDeceased
-            .getAll()
-            .then(setDeceased)
-            .catch((e) => console.error("realtime deceased:", e));
-        })
-        .subscribe(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase as any)
-        .from("funeral_services")
-        .on("*", () => {
-          dbServices
-            .getAll()
-            .then(setServices)
-            .catch((e) => console.error("realtime services:", e));
-        })
-        .subscribe(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase as any)
-        .from("staff_users")
-        .on("*", () => {
-          dbUsers
-            .getAll()
-            .then(setUsers)
-            .catch((e) => console.error("realtime users:", e));
-        })
-        .subscribe(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase as any)
-        .from("convenios")
-        .on("*", () => {
-          dbConvenios
-            .getAll()
-            .then(setConvenios)
-            .catch((e) => console.error("realtime convenios:", e));
-        })
-        .subscribe(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabase as any)
-        .from("catalog_categories")
-        .on("*", () => {
-          dbCatalog
-            .getAll()
-            .then((cat) => setCatalog(cat.length ? cat : mockCatalog))
-            .catch((e) => console.error("realtime catalog:", e));
-        })
-        .subscribe(),
-    ];
+    // Poll every 3 seconds for real-time sync
+    const pollInterval = setInterval(() => {
+      void loadAllData();
+    }, 3000);
 
-    // Cleanup subscriptions on unmount
-    return () => {
-      subscriptions.forEach((sub) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).removeSubscription(sub);
-      });
-    };
+    return () => clearInterval(pollInterval);
   }, []);
 
   /* ── helper: update deceased + persist JSONB arrays ── */
