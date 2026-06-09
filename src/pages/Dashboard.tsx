@@ -4,17 +4,112 @@ import {
   CalendarCheck,
   FileText,
   AlertTriangle,
-  TrendingUp,
   Clock,
+  ArrowRight,
 } from "lucide-react";
-import {
-  STATUS_LABELS,
-  STATUS_COLORS,
-  SERVICE_LABELS,
-} from "../utils/mockData";
+import { STATUS_LABELS, SERVICE_LABELS } from "../utils/mockData";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+
+/* ── stat card ──────────────────────────── */
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  accent,
+  sub,
+}: {
+  label: string;
+  value: number;
+  icon: React.ElementType;
+  accent: string;
+  sub?: string;
+}) {
+  return (
+    <div className="glass-card rounded-2xl p-5 group cursor-default animate-slide-up">
+      <div className="flex items-start justify-between mb-4">
+        <div
+          className="w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+          style={{ background: accent, boxShadow: `0 4px 15px ${accent}55` }}
+        >
+          <Icon size={20} style={{ color: "#060E1A" }} strokeWidth={2.5} />
+        </div>
+        <span
+          className="text-xs font-medium px-2 py-1 rounded-full"
+          style={{ background: "rgba(201,169,110,0.1)", color: "#C9A96E" }}
+        >
+          {sub ?? "Total"}
+        </span>
+      </div>
+      <p
+        className="text-4xl font-bold text-gold-shimmer mb-1"
+        style={{
+          background: "linear-gradient(90deg,#D4AF70,#F2E8CB,#D4AF70)",
+          backgroundSize: "200% auto",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+        }}
+      >
+        {value}
+      </p>
+      <p className="text-sm" style={{ color: "#8FA3B8" }}>
+        {label}
+      </p>
+    </div>
+  );
+}
+
+/* ── section card ───────────────────────── */
+function SectionCard({
+  title,
+  action,
+  onAction,
+  children,
+}: {
+  title: string;
+  action?: string;
+  onAction?: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="glass-card rounded-2xl overflow-hidden animate-slide-up">
+      <div
+        className="flex items-center justify-between px-6 py-4"
+        style={{ borderBottom: "1px solid rgba(201,169,110,0.1)" }}
+      >
+        <h2
+          className="font-semibold text-sm tracking-wide uppercase"
+          style={{ color: "#C9A96E", letterSpacing: "0.08em" }}
+        >
+          {title}
+        </h2>
+        {action && (
+          <button
+            onClick={onAction}
+            className="flex items-center gap-1 text-xs font-medium transition-all duration-200 hover:gap-2"
+            style={{ color: "#8FA3B8" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#D4AF70")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#8FA3B8")}
+          >
+            {action} <ArrowRight size={11} />
+          </button>
+        )}
+      </div>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  recepcion: { bg: "rgba(59,130,246,0.12)", color: "#93C5FD" },
+  preparacion: { bg: "rgba(139,92,246,0.12)", color: "#C4B5FD" },
+  en_proceso: { bg: "rgba(201,169,110,0.12)", color: "#D4AF70" },
+  velatorio: { bg: "rgba(249,115,22,0.12)", color: "#FDB877" },
+  traslado: { bg: "rgba(20,184,166,0.12)", color: "#5EEAD4" },
+  completado: { bg: "rgba(16,185,129,0.12)", color: "#6EE7B7" },
+  cancelado: { bg: "rgba(107,114,128,0.12)", color: "#9CA3AF" },
+};
 
 export default function Dashboard() {
   const { deceased, services, quotes } = useApp();
@@ -32,184 +127,231 @@ export default function Dashboard() {
     (q) => q.status === "borrador" || q.status === "enviada",
   );
 
-  const stats = [
-    {
-      label: "Casos Activos",
-      value: active.length,
-      icon: Users,
-      color: "bg-indigo-50 text-indigo-600",
-      border: "border-indigo-200",
-    },
-    {
-      label: "Servicios Hoy",
-      value: todayServices.length,
-      icon: CalendarCheck,
-      color: "bg-emerald-50 text-emerald-600",
-      border: "border-emerald-200",
-    },
-    {
-      label: "Cotizaciones Pendientes",
-      value: pendingQuotes.length,
-      icon: FileText,
-      color: "bg-amber-50 text-amber-700",
-      border: "border-amber-200",
-    },
-    {
-      label: "Urgencias",
-      value: urgent.length,
-      icon: AlertTriangle,
-      color: "bg-red-50 text-red-600",
-      border: "border-red-200",
-    },
-  ];
-
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-        <p className="text-slate-500 text-sm mt-1">
-          {format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es })}
+    <div className="p-8 space-y-8">
+      {/* Header */}
+      <div className="animate-fade-in">
+        <p
+          className="text-xs font-semibold tracking-widest uppercase mb-1"
+          style={{ color: "#C9A96E" }}
+        >
+          {format(new Date(), "EEEE", { locale: es }).toUpperCase()}
+        </p>
+        <h1 className="text-3xl font-bold" style={{ color: "#F0EDE8" }}>
+          {format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}
+        </h1>
+        <p className="text-sm mt-1" style={{ color: "#8FA3B8" }}>
+          Bienvenida al cetro de control de tu organización
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map(({ label, value, icon: Icon, color, border }) => (
-          <div
-            key={label}
-            className={`bg-white rounded-xl p-5 border ${border} shadow-sm`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div
-                className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center`}
-              >
-                <Icon size={20} />
-              </div>
-              <TrendingUp size={14} className="text-slate-300" />
-            </div>
-            <p className="text-3xl font-bold text-slate-800">{value}</p>
-            <p className="text-slate-500 text-sm mt-1">{label}</p>
-          </div>
-        ))}
+        <StatCard
+          label="Casos Activos"
+          value={active.length}
+          icon={Users}
+          accent="#C9A96E"
+        />
+        <StatCard
+          label="Servicios Hoy"
+          value={todayServices.length}
+          icon={CalendarCheck}
+          accent="#6EE7B7"
+          sub="Hoy"
+        />
+        <StatCard
+          label="Cotizaciones Pendientes"
+          value={pendingQuotes.length}
+          icon={FileText}
+          accent="#93C5FD"
+        />
+        <StatCard
+          label="Urgencias"
+          value={urgent.length}
+          icon={AlertTriangle}
+          accent="#FCA5A5"
+          sub="Alerta"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Active cases */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-800">Casos en Curso</h2>
-            <button
-              onClick={() => navigate("/fallecidos")}
-              className="text-indigo-600 text-sm hover:underline"
-            >
-              Ver todos
-            </button>
-          </div>
-          <div className="divide-y divide-slate-50">
-            {active.length === 0 && (
-              <p className="px-5 py-6 text-slate-400 text-sm text-center">
+        <SectionCard
+          title="Casos en Curso"
+          action="Ver todos"
+          onAction={() => navigate("/fallecidos")}
+        >
+          {active.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <div
+                className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
+                style={{ background: "rgba(201,169,110,0.08)" }}
+              >
+                <Users size={20} style={{ color: "#C9A96E" }} />
+              </div>
+              <p className="text-sm" style={{ color: "#8FA3B8" }}>
                 Sin casos activos
               </p>
-            )}
-            {active.map((d) => (
-              <div
-                key={d.id}
-                className="px-5 py-3 hover:bg-slate-50 cursor-pointer transition-colors"
-                onClick={() => navigate(`/fallecidos/${d.id}`)}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-slate-800 text-sm">
-                      {d.fullName}
-                    </p>
-                    <p className="text-slate-400 text-xs mt-0.5">
-                      {SERVICE_LABELS[d.serviceType]} ·{" "}
-                      {d.assignedStaff || "Sin asignar"}
-                    </p>
+            </div>
+          ) : (
+            active.slice(0, 6).map((d, i) => {
+              const st = STATUS_STYLE[d.status] ?? STATUS_STYLE.recepcion;
+              return (
+                <div
+                  key={d.id}
+                  className="table-row-veladesk flex items-center justify-between px-6 py-4 cursor-pointer"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                  onClick={() => navigate(`/fallecidos/${d.id}`)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                      style={{
+                        background: "linear-gradient(135deg,#D4AF70,#A07840)",
+                        color: "#060E1A",
+                      }}
+                    >
+                      {d.fullName.charAt(0)}
+                    </div>
+                    <div>
+                      <p
+                        className="text-sm font-medium"
+                        style={{ color: "#F0EDE8" }}
+                      >
+                        {d.fullName}
+                      </p>
+                      <p
+                        className="text-xs mt-0.5"
+                        style={{ color: "#8FA3B8" }}
+                      >
+                        {SERVICE_LABELS[d.serviceType]} ·{" "}
+                        {d.assignedStaff || "Sin asignar"}
+                      </p>
+                    </div>
                   </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[d.status]}`}
-                  >
-                    {STATUS_LABELS[d.status]}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {d.urgencies && (
+                      <AlertTriangle size={13} style={{ color: "#FCA5A5" }} />
+                    )}
+                    <span
+                      className="text-xs px-2.5 py-1 rounded-full font-medium"
+                      style={{ background: st.bg, color: st.color }}
+                    >
+                      {STATUS_LABELS[d.status]}
+                    </span>
+                  </div>
                 </div>
-                {d.urgencies && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                    <AlertTriangle size={11} /> {d.urgencies}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+              );
+            })
+          )}
+        </SectionCard>
 
         {/* Today's services */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-800">Servicios de Hoy</h2>
-            <button
-              onClick={() => navigate("/calendario")}
-              className="text-indigo-600 text-sm hover:underline"
-            >
-              Ver calendario
-            </button>
-          </div>
-          <div className="divide-y divide-slate-50">
-            {todayServices.length === 0 && (
-              <p className="px-5 py-6 text-slate-400 text-sm text-center">
+        <SectionCard
+          title="Servicios de Hoy"
+          action="Ver progreso"
+          onAction={() => navigate("/progreso")}
+        >
+          {todayServices.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <div
+                className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
+                style={{ background: "rgba(201,169,110,0.08)" }}
+              >
+                <CalendarCheck size={20} style={{ color: "#C9A96E" }} />
+              </div>
+              <p className="text-sm" style={{ color: "#8FA3B8" }}>
                 Sin servicios programados hoy
               </p>
-            )}
-            {todayServices.map((s) => (
-              <div key={s.id} className="px-5 py-3">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5">
-                    <Clock size={14} className="text-slate-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-slate-800 text-sm">
-                      {s.deceasedName}
-                    </p>
-                    <p className="text-slate-500 text-xs">
-                      {SERVICE_LABELS[s.serviceType]}
-                    </p>
-                    <p className="text-slate-400 text-xs mt-0.5">
-                      {format(new Date(s.startDate), "HH:mm")} · {s.location}
-                    </p>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      s.status === "en_curso"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-indigo-100 text-indigo-700"
-                    }`}
-                  >
-                    {s.status === "en_curso" ? "En curso" : "Programado"}
-                  </span>
+            </div>
+          ) : (
+            todayServices.map((s, i) => (
+              <div
+                key={s.id}
+                className="table-row-veladesk flex items-start gap-4 px-6 py-4"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                  style={{
+                    background: "rgba(201,169,110,0.1)",
+                    border: "1px solid rgba(201,169,110,0.2)",
+                  }}
+                >
+                  <Clock size={15} style={{ color: "#C9A96E" }} />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="text-sm font-medium truncate"
+                    style={{ color: "#F0EDE8" }}
+                  >
+                    {s.deceasedName}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "#8FA3B8" }}>
+                    {SERVICE_LABELS[s.serviceType]}
+                  </p>
+                  <p
+                    className="text-xs mt-0.5"
+                    style={{ color: "rgba(143,163,184,0.6)" }}
+                  >
+                    {format(new Date(s.startDate), "HH:mm")} · {s.location}
+                  </p>
+                </div>
+                <span
+                  className="text-xs px-2.5 py-1 rounded-full font-medium shrink-0"
+                  style={
+                    s.status === "en_curso"
+                      ? {
+                          background: "rgba(16,185,129,0.12)",
+                          color: "#6EE7B7",
+                        }
+                      : {
+                          background: "rgba(201,169,110,0.12)",
+                          color: "#D4AF70",
+                        }
+                  }
+                >
+                  {s.status === "en_curso" ? "En curso" : "Programado"}
+                </span>
               </div>
-            ))}
-          </div>
-        </div>
+            ))
+          )}
+        </SectionCard>
       </div>
 
       {/* Urgent alerts */}
       {urgent.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-          <h2 className="font-semibold text-red-800 flex items-center gap-2 mb-3">
+        <div
+          className="rounded-2xl p-6 animate-slide-up"
+          style={{
+            background: "rgba(239,68,68,0.06)",
+            border: "1px solid rgba(239,68,68,0.2)",
+          }}
+        >
+          <h2
+            className="font-semibold flex items-center gap-2 mb-4 text-sm uppercase tracking-widest"
+            style={{ color: "#FCA5A5" }}
+          >
             <AlertTriangle size={16} /> Alertas de Urgencia
           </h2>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {urgent.map((d) => (
               <div
                 key={d.id}
-                className="bg-white rounded-lg px-4 py-3 border border-red-100 cursor-pointer hover:border-red-300 transition-colors"
+                className="rounded-xl px-4 py-3 cursor-pointer transition-all duration-200 hover:scale-[1.01]"
+                style={{
+                  background: "rgba(239,68,68,0.08)",
+                  border: "1px solid rgba(239,68,68,0.15)",
+                }}
                 onClick={() => navigate(`/fallecidos/${d.id}`)}
               >
-                <p className="font-medium text-slate-800 text-sm">
+                <p className="font-medium text-sm" style={{ color: "#F0EDE8" }}>
                   {d.fullName}
                 </p>
-                <p className="text-red-600 text-xs mt-0.5">{d.urgencies}</p>
+                <p className="text-xs mt-1" style={{ color: "#FCA5A5" }}>
+                  {d.urgencies}
+                </p>
               </div>
             ))}
           </div>

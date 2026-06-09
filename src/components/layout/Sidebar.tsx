@@ -1,64 +1,199 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  ClipboardList,
+  Activity,
   Users,
   Settings,
   ChevronRight,
 } from "lucide-react";
 
-const nav = [
+const NAV = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/progreso", icon: ClipboardList, label: "Progreso" },
+  { to: "/progreso", icon: Activity, label: "Progreso" },
   { to: "/fallecidos", icon: Users, label: "Fichas de Fallecidos" },
   { to: "/admin", icon: Settings, label: "Administrador" },
 ];
 
-export default function Sidebar() {
+function VelodeskLogo() {
   return (
-    <aside className="w-64 bg-slate-900 text-white flex flex-col min-h-screen">
-      <div className="px-6 py-5 border-b border-slate-700">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg">
-            F
-          </div>
-          <div>
-            <p className="font-semibold text-sm leading-tight">Funeraria</p>
-            <p className="text-slate-400 text-xs">Admin System</p>
-          </div>
-        </div>
+    <svg
+      viewBox="0 0 220 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-full h-auto"
+    >
+      <defs>
+        <linearGradient id="vGold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#E8D5B0" />
+          <stop offset="45%" stopColor="#D4AF70" />
+          <stop offset="100%" stopColor="#8B6914" />
+        </linearGradient>
+        <linearGradient id="vGoldD" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#F2E8CB" />
+          <stop offset="100%" stopColor="#C9A96E" />
+        </linearGradient>
+        <filter id="vGlow">
+          <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <path
+        d="M6 6 L24 52 L32 34 L20 6 Z"
+        fill="url(#vGold)"
+        filter="url(#vGlow)"
+      />
+      <path
+        d="M44 6 L26 52 L32 34 L46 6 Z"
+        fill="url(#vGold)"
+        filter="url(#vGlow)"
+      />
+      <rect
+        x="27"
+        y="1"
+        width="10"
+        height="10"
+        rx="1.5"
+        transform="rotate(45 32 6)"
+        fill="url(#vGoldD)"
+        filter="url(#vGlow)"
+      />
+      <text
+        x="60"
+        y="36"
+        fontFamily="Georgia, 'Times New Roman', serif"
+        fontSize="24"
+        fontWeight="400"
+        letterSpacing="0.5"
+        fill="#F0EDE8"
+      >
+        Veladesk
+      </text>
+      <text
+        x="60"
+        y="52"
+        fontFamily="Inter, Arial, sans-serif"
+        fontSize="6.5"
+        fontWeight="600"
+        letterSpacing="2.2"
+        fill="#C9A96E"
+      >
+        EL CETRO DE CONTROL
+      </text>
+    </svg>
+  );
+}
+
+export default function Sidebar() {
+  const location = useLocation();
+
+  return (
+    <aside
+      className="w-64 flex flex-col h-full border-r"
+      style={{
+        background:
+          "linear-gradient(180deg, #060E1A 0%, #0A1628 50%, #0D1E35 100%)",
+        borderColor: "rgba(201,169,110,0.15)",
+      }}
+    >
+      {/* Logo */}
+      <div className="px-6 pt-8 pb-5">
+        <VelodeskLogo />
+        <div
+          className="mt-6 h-px"
+          style={{
+            background:
+              "linear-gradient(90deg,transparent,rgba(201,169,110,0.4),transparent)",
+          }}
+        />
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {nav.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === "/"}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group ${
+      {/* Nav */}
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto py-2">
+        {NAV.map(({ to, icon: Icon, label }) => {
+          const isActive =
+            to === "/"
+              ? location.pathname === "/"
+              : location.pathname.startsWith(to);
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium group rounded-xl"
+              style={
                 isActive
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <Icon size={18} className="shrink-0" />
-                <span className="flex-1">{label}</span>
-                <ChevronRight
-                  size={14}
-                  className={`transition-opacity ${isActive ? "opacity-70" : "opacity-0 group-hover:opacity-40"}`}
+                  ? {
+                      background: "rgba(201,169,110,0.12)",
+                      borderLeft: "3px solid #C9A96E",
+                    }
+                  : { borderLeft: "3px solid transparent" }
+              }
+            >
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                  isActive ? "shadow-gold-sm" : ""
+                }`}
+                style={{
+                  background: isActive
+                    ? "linear-gradient(135deg,#D4AF70,#A07840)"
+                    : "rgba(17,34,68,0.6)",
+                }}
+              >
+                <Icon
+                  size={15}
+                  className={
+                    isActive
+                      ? "text-navy-950"
+                      : "text-cream-500 group-hover:text-gold-400"
+                  }
+                  style={{ color: isActive ? "#060E1A" : undefined }}
+                  strokeWidth={isActive ? 2.5 : 2}
                 />
-              </>
-            )}
-          </NavLink>
-        ))}
+              </div>
+              <span
+                className="flex-1 transition-colors duration-200"
+                style={{ color: isActive ? "#D4AF70" : "#8FA3B8" }}
+              >
+                {label}
+              </span>
+              <ChevronRight
+                size={13}
+                style={{ color: "#C9A96E" }}
+                className={`transition-all duration-200 ${
+                  isActive ? "opacity-100" : "opacity-0 group-hover:opacity-50"
+                }`}
+              />
+            </NavLink>
+          );
+        })}
       </nav>
 
-      <div className="px-5 py-4 border-t border-slate-700">
-        <p className="text-slate-500 text-xs">v1.0.0 · 2026</p>
+      {/* Footer */}
+      <div className="px-6 pb-6">
+        <div
+          className="h-px mb-4"
+          style={{
+            background:
+              "linear-gradient(90deg,transparent,rgba(201,169,110,0.3),transparent)",
+          }}
+        />
+        <div className="flex items-center gap-2 px-2">
+          <div
+            className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"
+            style={{ boxShadow: "0 0 6px rgba(52,211,153,0.7)" }}
+          />
+          <span className="text-xs" style={{ color: "rgba(143,163,184,0.7)" }}>
+            Sistema activo
+          </span>
+        </div>
+        <p
+          className="text-xs mt-1 px-2"
+          style={{ color: "rgba(143,163,184,0.3)" }}
+        >
+          v1.0.0 · 2026
+        </p>
       </div>
     </aside>
   );

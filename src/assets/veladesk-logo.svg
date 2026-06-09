@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" fill="none">
+  <!-- V shape left -->
+  <path d="M12 8 L34 58 L44 38 L28 8 Z" fill="url(#goldGrad)"/>
+  <!-- V shape right -->
+  <path d="M56 8 L34 58 L44 38 L60 8 Z" fill="url(#goldGrad)"/>
+  <!-- Diamond -->
+  <rect x="30" y="4" width="8" height="8" rx="1" transform="rotate(45 34 8)" fill="url(#goldGradLight)"/>
+  <!-- Veladesk text -->
+  <text x="78" y="42" font-family="Georgia, serif" font-size="28" font-weight="400" letter-spacing="1" fill="#F0EDE8">Veladesk</text>
+  <!-- Tagline -->
+  <text x="78" y="58" font-family="Arial, sans-serif" font-size="8" font-weight="600" letter-spacing="2.5" fill="#C9A96E">EL CETRO DE CONTROL DE TU ORGANIZACIÓN</text>
+  <defs>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D4AF70"/>
+      <stop offset="50%" stop-color="#C9A96E"/>
+      <stop offset="100%" stop-color="#A07840"/>
+    </linearGradient>
+    <linearGradient id="goldGradLight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E8D5B0"/>
+      <stop offset="100%" stop-color="#C9A96E"/>
+    </linearGradient>
+  </defs>
+</svg>
