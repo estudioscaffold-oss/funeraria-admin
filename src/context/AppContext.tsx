@@ -95,25 +95,96 @@ export function AppProvider({ children }: { children: ReactNode }) {
     IS_ONLINE ? [] : mockCatalog,
   );
 
-  /* ── load from Supabase on mount ── */
+  /* ── load from Supabase on mount + real-time subscriptions ── */
   useEffect(() => {
     if (!IS_ONLINE) return;
-    Promise.all([
-      dbDeceased.getAll(),
-      dbServices.getAll(),
-      dbUsers.getAll(),
-      dbConvenios.getAll(),
-      dbCatalog.getAll(),
-    ])
-      .then(([dec, svc, usr, conv, cat]) => {
+
+    const loadData = async () => {
+      try {
+        const [dec, svc, usr, conv, cat] = await Promise.all([
+          dbDeceased.getAll(),
+          dbServices.getAll(),
+          dbUsers.getAll(),
+          dbConvenios.getAll(),
+          dbCatalog.getAll(),
+        ]);
         setDeceased(dec);
         setServices(svc);
         setUsers(usr);
         setConvenios(conv);
         setCatalog(cat.length ? cat : mockCatalog);
-      })
-      .catch((e) => console.error("Supabase load error:", e))
-      .finally(() => setLoading(false));
+      } catch (e) {
+        console.error("Supabase load error:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Load initial data
+    void loadData();
+
+    // Subscribe to real-time changes
+    const subscriptions = [
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from("deceased_records")
+        .on("*", () => {
+          // Reload deceased when any change happens
+          dbDeceased
+            .getAll()
+            .then(setDeceased)
+            .catch((e) => console.error("realtime deceased:", e));
+        })
+        .subscribe(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from("funeral_services")
+        .on("*", () => {
+          dbServices
+            .getAll()
+            .then(setServices)
+            .catch((e) => console.error("realtime services:", e));
+        })
+        .subscribe(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from("staff_users")
+        .on("*", () => {
+          dbUsers
+            .getAll()
+            .then(setUsers)
+            .catch((e) => console.error("realtime users:", e));
+        })
+        .subscribe(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from("convenios")
+        .on("*", () => {
+          dbConvenios
+            .getAll()
+            .then(setConvenios)
+            .catch((e) => console.error("realtime convenios:", e));
+        })
+        .subscribe(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from("catalog_categories")
+        .on("*", () => {
+          dbCatalog
+            .getAll()
+            .then((cat) => setCatalog(cat.length ? cat : mockCatalog))
+            .catch((e) => console.error("realtime catalog:", e));
+        })
+        .subscribe(),
+    ];
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      subscriptions.forEach((sub) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).removeSubscription(sub);
+      });
+    };
   }, []);
 
   /* ── helper: update deceased + persist JSONB arrays ── */
