@@ -20,7 +20,7 @@ const NAV = [
     label: "Fichas de Fallecidos",
     mock: false,
   },
-  { to: "/flota", icon: Truck, label: "Gestión de Flota", mock: true },
+  { to: "/flota", icon: Truck, label: "Gestión de Flota", mock: false },
   {
     to: "/finanzas",
     icon: DollarSign,

@@ -1,3 +1,51 @@
+/* ─── Fleet types ───────────────────────────── */
+export type VehicleType =
+  | "carroza_funebre"
+  | "furgon"
+  | "automovil"
+  | "camioneta"
+  | "carruaje"
+  | "minibus"
+  | "otro";
+
+export type VehicleStatus = "activo" | "mantenimiento" | "inactivo" | "baja";
+
+export interface VehicleDoc {
+  number: string; // nº póliza / nº permiso
+  company?: string; // aseguradora / entidad
+  issueDate?: string; // fecha emisión
+  expiryDate: string; // fecha vencimiento
+  notes?: string;
+}
+
+export interface Vehicle {
+  id: string;
+  type: VehicleType;
+  brand: string; // marca
+  model: string; // modelo
+  year: number;
+  color: string;
+  plate: string; // patente
+  vin?: string; // nº chasis / VIN
+  capacity?: number; // capacidad de pasajeros
+  mileage?: number; // kilometraje actual
+  fuelType?: "gasolina" | "diesel" | "electrico" | "hibrido" | "gas";
+  assignedTo?: string; // responsable / conductor
+  status: VehicleStatus;
+  // documentos
+  circulationPermit?: VehicleDoc; // permiso de circulación
+  soap?: VehicleDoc; // SOAP
+  insurance?: VehicleDoc; // seguro
+  technicalRevision?: VehicleDoc; // revisión técnica
+  // mantenimiento
+  lastService?: string; // última mantención YYYY-MM-DD
+  nextService?: string; // próxima mantención
+  nextServiceMileage?: number;
+  observations?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /* ─── Financial types ───────────────────────── */
 export interface Expense {
   id: string;
