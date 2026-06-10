@@ -259,16 +259,29 @@ export interface ProcessTask {
 
 export interface DeceasedRecord {
   id: string;
+  /* ── Sucursal ── */
+  sucursal?: string;
+  /* ── Datos del fallecido ── */
   fullName: string;
   rut: string;
   birthDate: string;
   nationality: string;
+  address?: string; // dirección del fallecido
+  weight?: number; // peso en kg
+  height?: number; // altura en cms
+  prevision?: string; // previsión de salud / isapre / fonasa
+  occupation?: string; // ocupación / profesión
+  civilStatus?: string; // estado civil
+  educationLevel?: string; // nivel de estudios
   deathDate: string;
   deathTime: string;
   deathPlace: string;
   deathCause?: string;
+  /* ── Datos del contratante ── */
   familyContact: FamilyContact;
+  /* ── Servicio ── */
   serviceType: ServiceType;
+  serviceIncludes?: string; // desglose de lo incluido
   status: ProcessStatus;
   velatorio?: string;
   velatorioAddress?: string;
@@ -276,11 +289,13 @@ export interface DeceasedRecord {
   cemeteryAddress?: string;
   crematorium?: string;
   crematoriumAddress?: string;
+  /* ── Preferencias y observaciones ── */
   religiousPreference: ReligiousPreference;
   religiousNotes?: string;
   urgencies?: string;
   restrictions?: string;
   sensitiveObservations?: string;
+  /* ── Archivos y gestión ── */
   documents: Document[];
   budgets: DeceasedBudget[];
   payments: PaymentRecord[];
