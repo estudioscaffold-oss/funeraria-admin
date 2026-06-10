@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import type { ProcessTask } from "../types";
+import type { ProcessTask, TaskResource } from "../types";
 import {
   generateDefaultTasks,
   SERVICE_LABELS,
@@ -18,8 +18,11 @@ import {
   Trash2,
   Play,
   RotateCcw,
+  Package,
+  Users as UsersIcon,
   ExternalLink,
   User,
+  X,
 } from "lucide-react";
 
 /* ─── Task color palette ─────────────────────────── */
@@ -336,6 +339,288 @@ function MiniGantt({
   );
 }
 
+/* ─── Task detail panel ─────────────────────────── */
+function TaskDetail({
+  task,
+  onUpdate,
+  onDelete,
+  onStatus,
+}: {
+  task: ProcessTask;
+  deceasedId: string;
+  onUpdate: (t: ProcessTask) => void;
+  onDelete: () => void;
+  onStatus: (s: ProcessTask["status"]) => void;
+}) {
+  const { users } = useApp();
+  const staff =
+    task.assignedStaff ?? (task.assignedTo ? [task.assignedTo] : []);
+  const resources: TaskResource[] = task.resources ?? [];
+
+  const toggleStaff = (name: string) => {
+    const next = staff.includes(name)
+      ? staff.filter((s) => s !== name)
+      : [...staff, name];
+    onUpdate({ ...task, assignedStaff: next, assignedTo: next[0] ?? "" });
+  };
+
+  const addResource = () =>
+    onUpdate({
+      ...task,
+      resources: [
+        ...resources,
+        { id: crypto.randomUUID(), name: "", quantity: 1, unit: "unidad" },
+      ],
+    });
+
+  const updateResource = (id: string, patch: Partial<TaskResource>) =>
+    onUpdate({
+      ...task,
+      resources: resources.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    });
+
+  const removeResource = (id: string) =>
+    onUpdate({ ...task, resources: resources.filter((r) => r.id !== id) });
+
+  // All available staff: from users + VENDEDORES fallback
+  const allStaff = users.length
+    ? users.filter((u) => u.active).map((u) => u.fullName)
+    : VENDEDORES;
+
+  return (
+    <div className="px-4 py-4 space-y-4">
+      {/* ── Nombre + Estado + Tiempos ── */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2">
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+            Nombre de la etapa
+          </label>
+          <input
+            className={inputCls}
+            value={task.name}
+            onChange={(e) => onUpdate({ ...task, name: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+            Estado
+          </label>
+          <select
+            className={inputCls}
+            value={task.status}
+            onChange={(e) => onStatus(e.target.value as ProcessTask["status"])}
+          >
+            <option value="pendiente">Pendiente</option>
+            <option value="en_curso">En curso</option>
+            <option value="completado">Completado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+            Inicio planificado
+          </label>
+          <input
+            type="datetime-local"
+            className={inputCls}
+            value={task.plannedStart?.slice(0, 16) ?? ""}
+            onChange={(e) =>
+              onUpdate({ ...task, plannedStart: e.target.value })
+            }
+          />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+            Término planificado
+          </label>
+          <input
+            type="datetime-local"
+            className={inputCls}
+            value={task.plannedEnd?.slice(0, 16) ?? ""}
+            onChange={(e) => onUpdate({ ...task, plannedEnd: e.target.value })}
+          />
+        </div>
+        <div className="col-span-2">
+          <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+            Notas
+          </label>
+          <input
+            className={inputCls}
+            value={task.notes ?? ""}
+            onChange={(e) => onUpdate({ ...task, notes: e.target.value })}
+            placeholder="Observaciones de la etapa…"
+          />
+        </div>
+      </div>
+
+      {/* ── Personal asignado ── */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <UsersIcon size={13} className="text-slate-400" />
+          <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+            Personal asignado
+          </label>
+          {staff.length > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-medium">
+              {staff.length} asignado{staff.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-1.5 p-3 rounded-xl bg-white border border-slate-200">
+          {allStaff.map((name) => {
+            const sel = staff.includes(name);
+            return (
+              <button
+                key={name}
+                onClick={() => toggleStaff(name)}
+                className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-all duration-150 ${
+                  sel
+                    ? "bg-navy-900 text-white border-navy-900"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+                style={
+                  sel
+                    ? {
+                        background: "#0A1628",
+                        borderColor: "#0A1628",
+                        color: "#fff",
+                      }
+                    : {}
+                }
+              >
+                {sel && <Check size={10} />}
+                {name.split(" ")[0]} {name.split(" ")[1]?.charAt(0)}.
+              </button>
+            );
+          })}
+          {allStaff.length === 0 && (
+            <p className="text-xs text-slate-400">
+              Sin personal disponible. Agrega en Administrador.
+            </p>
+          )}
+        </div>
+        {/* selected chips */}
+        {staff.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {staff.map((s) => (
+              <span
+                key={s}
+                className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium"
+                style={{ background: "#0A1628", color: "#D4AF70" }}
+              >
+                {s}
+                <button
+                  onClick={() => toggleStaff(s)}
+                  className="ml-0.5 opacity-70 hover:opacity-100"
+                >
+                  <X size={9} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Insumos / Recursos ── */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Package size={13} className="text-slate-400" />
+            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+              Insumos y Recursos
+            </label>
+            {resources.length > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-medium">
+                {resources.length} ítem{resources.length > 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={addResource}
+            className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:bg-slate-50 text-slate-600 border-slate-200"
+          >
+            <Plus size={11} /> Agregar
+          </button>
+        </div>
+
+        {resources.length === 0 ? (
+          <div className="p-4 rounded-xl border border-dashed border-slate-200 text-center">
+            <p className="text-xs text-slate-400">Sin insumos asignados</p>
+            <button
+              onClick={addResource}
+              className="mt-1 text-xs text-indigo-500 hover:underline"
+            >
+              + Agregar insumo
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {resources.map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-white border border-slate-200"
+              >
+                <input
+                  className="flex-1 text-xs border-0 outline-none bg-transparent font-medium text-slate-700"
+                  value={r.name}
+                  placeholder="Nombre del insumo / recurso…"
+                  onChange={(e) =>
+                    updateResource(r.id, { name: e.target.value })
+                  }
+                />
+                <input
+                  type="number"
+                  min={1}
+                  className="w-14 text-xs text-center border border-slate-200 rounded-lg px-1.5 py-1 outline-none focus:border-slate-400"
+                  value={r.quantity ?? 1}
+                  onChange={(e) =>
+                    updateResource(r.id, { quantity: Number(e.target.value) })
+                  }
+                />
+                <select
+                  className="text-xs border border-slate-200 rounded-lg px-1.5 py-1 outline-none bg-white text-slate-600 focus:border-slate-400"
+                  value={r.unit ?? "unidad"}
+                  onChange={(e) =>
+                    updateResource(r.id, { unit: e.target.value })
+                  }
+                >
+                  {[
+                    "unidad",
+                    "litros",
+                    "kg",
+                    "metros",
+                    "horas",
+                    "caja",
+                    "set",
+                  ].map((u) => (
+                    <option key={u}>{u}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => removeResource(r.id)}
+                  className="p-1 rounded-lg text-red-400 hover:bg-red-50 transition-colors shrink-0"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Acciones ── */}
+      <div className="flex justify-end pt-1">
+        <button
+          onClick={onDelete}
+          className="flex items-center gap-1.5 text-xs text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          <Trash2 size={12} /> Eliminar etapa
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Task row ───────────────────────────────────── */
 function TaskRow({
   task,
@@ -452,118 +737,17 @@ function TaskRow({
 
       {/* expanded detail */}
       {open && (
-        <div className="px-4 pb-4 pt-2 border-t border-slate-100 bg-white space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className="text-xs font-medium text-slate-500 block mb-1">
-                Nombre
-              </label>
-              <input
-                className={inputCls}
-                value={task.name}
-                onChange={(e) =>
-                  updateTask(deceasedId, { ...task, name: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-500 block mb-1">
-                Responsable
-              </label>
-              <select
-                className={inputCls}
-                value={task.assignedTo ?? ""}
-                onChange={(e) =>
-                  updateTask(deceasedId, {
-                    ...task,
-                    assignedTo: e.target.value,
-                  })
-                }
-              >
-                <option value="">Sin asignar</option>
-                {VENDEDORES.map((v) => (
-                  <option key={v}>{v}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-500 block mb-1">
-                Estado
-              </label>
-              <select
-                className={inputCls}
-                value={task.status}
-                onChange={(e) =>
-                  setTaskStatus(
-                    deceasedId,
-                    task.id,
-                    e.target.value as ProcessTask["status"],
-                  )
-                }
-              >
-                <option value="pendiente">Pendiente</option>
-                <option value="en_curso">En curso</option>
-                <option value="completado">Completado</option>
-                <option value="cancelado">Cancelado</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-500 block mb-1">
-                Inicio planificado
-              </label>
-              <input
-                type="datetime-local"
-                className={inputCls}
-                value={task.plannedStart?.slice(0, 16) ?? ""}
-                onChange={(e) =>
-                  updateTask(deceasedId, {
-                    ...task,
-                    plannedStart: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-500 block mb-1">
-                Término planificado
-              </label>
-              <input
-                type="datetime-local"
-                className={inputCls}
-                value={task.plannedEnd?.slice(0, 16) ?? ""}
-                onChange={(e) =>
-                  updateTask(deceasedId, {
-                    ...task,
-                    plannedEnd: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="text-xs font-medium text-slate-500 block mb-1">
-                Notas
-              </label>
-              <input
-                className={inputCls}
-                value={task.notes ?? ""}
-                onChange={(e) =>
-                  updateTask(deceasedId, { ...task, notes: e.target.value })
-                }
-                placeholder="Observaciones…"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <button
-              onClick={() => {
-                if (confirm(`¿Eliminar tarea "${task.name}"?`))
-                  deleteTask(deceasedId, task.id);
-              }}
-              className="flex items-center gap-1.5 text-xs text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              <Trash2 size={12} /> Eliminar tarea
-            </button>
-          </div>
+        <div className="border-t border-slate-100 bg-slate-50/40">
+          <TaskDetail
+            task={task}
+            deceasedId={deceasedId}
+            onUpdate={(t) => updateTask(deceasedId, t)}
+            onDelete={() => {
+              if (confirm(`¿Eliminar tarea "${task.name}"?`))
+                deleteTask(deceasedId, task.id);
+            }}
+            onStatus={(s) => setTaskStatus(deceasedId, task.id, s)}
+          />
         </div>
       )}
     </div>

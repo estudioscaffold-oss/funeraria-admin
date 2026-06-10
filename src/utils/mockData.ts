@@ -25,46 +25,64 @@ export const DEFAULT_TASK_TEMPLATES: {
   durationHours: number;
 }[] = [
   {
-    name: "Retiro del cuerpo",
-    description: "Traslado desde el lugar de fallecimiento",
+    name: "Servicio ingresado",
+    description: "Registro del servicio, datos del fallecido y familia",
     offsetHours: 0,
-    durationHours: 2,
-  },
-  {
-    name: "Recepción en funeraria",
-    description: "Ingreso y registro del fallecido",
-    offsetHours: 2,
     durationHours: 1,
   },
   {
-    name: "Preparación del cuerpo",
-    description: "Tanatopraxia, vestimenta y presentación",
+    name: "Traslado",
+    description: "Retiro del cuerpo desde el lugar de fallecimiento",
+    offsetHours: 1,
+    durationHours: 2,
+  },
+  {
+    name: "Ingreso y preparación",
+    description: "Recepción en funeraria, tanatopraxia y vestimenta",
     offsetHours: 3,
-    durationHours: 5,
+    durationHours: 4,
+  },
+  {
+    name: "Ataúd preparado",
+    description: "Acondicionamiento del ataúd y presentación del fallecido",
+    offsetHours: 7,
+    durationHours: 2,
   },
   {
     name: "Traslado a velatorio",
-    description: "Traslado a sala de velatorio",
-    offsetHours: 8,
-    durationHours: 1,
-  },
-  {
-    name: "Velatorio",
-    description: "Período de velación con familia",
+    description: "Traslado del fallecido a sala de velatorio",
     offsetHours: 9,
-    durationHours: 16,
-  },
-  {
-    name: "Traslado al cementerio",
-    description: "Traslado en carroza fúnebre",
-    offsetHours: 25,
     durationHours: 1,
   },
   {
-    name: "Inhumación / Cremación",
-    description: "Ceremonia final de despedida",
-    offsetHours: 26,
+    name: "Velatorio en curso",
+    description: "Período de velación con familia y allegados",
+    offsetHours: 10,
+    durationHours: 14,
+  },
+  {
+    name: "Cortejo en tránsito",
+    description: "Salida del velatorio y traslado en cortejo fúnebre",
+    offsetHours: 24,
+    durationHours: 1,
+  },
+  {
+    name: "Sepultación realizada",
+    description: "Ceremonia de sepultación en cementerio",
+    offsetHours: 25,
     durationHours: 2,
+  },
+  {
+    name: "Cremación realizada",
+    description: "Proceso de cremación y entrega de cenizas",
+    offsetHours: 25,
+    durationHours: 3,
+  },
+  {
+    name: "Servicio finalizado",
+    description: "Cierre administrativo, documentos y entrega a familia",
+    offsetHours: 27,
+    durationHours: 1,
   },
 ];
 

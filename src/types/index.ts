@@ -205,13 +205,23 @@ export interface Convenio {
 
 export type TaskStatus = "pendiente" | "en_curso" | "completado" | "cancelado";
 
+export interface TaskResource {
+  id: string;
+  name: string; // ej: "Ataúd modelo X", "Urna", "Vehículo BCDK-41"
+  quantity?: number;
+  unit?: string; // ej: "unidad", "litros", "kg"
+  notes?: string;
+}
+
 export interface ProcessTask {
   id: string;
   name: string;
   description?: string;
-  assignedTo?: string;
-  plannedStart?: string; // ISO datetime
-  plannedEnd?: string; // ISO datetime
+  assignedTo?: string; // kept for backwards compat
+  assignedStaff?: string[]; // múltiples trabajadores
+  resources?: TaskResource[]; // insumos / recursos
+  plannedStart?: string;
+  plannedEnd?: string;
   actualStart?: string;
   actualEnd?: string;
   status: TaskStatus;
