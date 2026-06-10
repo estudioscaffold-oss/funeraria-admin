@@ -115,7 +115,7 @@ export default function Sidebar() {
       className="w-64 flex flex-col h-full border-r"
       style={{
         background:
-          "linear-gradient(180deg, #060E1A 0%, #0A1628 50%, #0D1E35 100%)",
+          "linear-gradient(180deg, var(--brand-dark) 0%, var(--brand) 50%, var(--brand-mid) 100%)",
         borderColor: "rgba(201,169,110,0.15)",
       }}
     >
@@ -152,7 +152,7 @@ export default function Sidebar() {
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{
-                    background: "rgba(17,34,68,0.4)",
+                    background: "rgba(255,255,255,0.05)",
                     border: "1px dashed rgba(201,169,110,0.2)",
                   }}
                 >
@@ -202,7 +202,7 @@ export default function Sidebar() {
                 style={{
                   background: isActive
                     ? "linear-gradient(135deg,#D4AF70,#A07840)"
-                    : "rgba(17,34,68,0.6)",
+                    : "rgba(255,255,255,0.07)",
                 }}
               >
                 <Icon

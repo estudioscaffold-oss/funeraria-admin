@@ -9,6 +9,12 @@
 }
 
 :root {
+  /* ── Theme vars (overridden by JS) ── */
+  --brand: #0d1820;
+  --brand-dark: #070f15;
+  --brand-mid: #183048;
+  --brand-text: #d4af70;
+
   --navy: #0a1628;
   --navy-mid: #1e3a6e;
   --gold: #c9a96e;

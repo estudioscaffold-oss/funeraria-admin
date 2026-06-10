@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useApp } from "../context/AppContext";
 import {
   Plus,
@@ -12,6 +12,13 @@ import {
   Handshake,
   Tag,
   Layers,
+  Building2,
+  Palette,
+  Upload,
+  Phone,
+  Mail,
+  Globe,
+  MapPin,
 } from "lucide-react";
 import type { AppUser, Convenio, CatalogItem, UserRole } from "../types";
 import {
@@ -21,8 +28,10 @@ import {
 } from "../utils/mockData";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { applyTheme, THEMES, type ThemeKey } from "../lib/theme";
 
 const TABS = [
+  { id: "perfil", label: "Perfil", icon: Building2 },
   { id: "usuarios", label: "Usuarios", icon: Users },
   { id: "convenios", label: "Convenios", icon: Handshake },
   { id: "servicios", label: "Servicios", icon: Tag },
@@ -952,10 +961,422 @@ function TabCategorias() {
 }
 
 /* ════════════════════════════════════════════════════
+   TAB PERFIL — Empresa + Tema
+   ════════════════════════════════════════════════════ */
+interface CompanyProfile {
+  logo: string;
+  name: string;
+  rut: string;
+  address: string;
+  city: string;
+  phone1: string;
+  phone2: string;
+  email: string;
+  website: string;
+  description: string;
+  ownerName: string;
+  ownerPhone: string;
+}
+
+const EMPTY_PROFILE: CompanyProfile = {
+  logo: "",
+  name: "",
+  rut: "",
+  address: "",
+  city: "",
+  phone1: "",
+  phone2: "",
+  email: "",
+  website: "",
+  description: "",
+  ownerName: "",
+  ownerPhone: "",
+};
+
+function loadProfile(): CompanyProfile {
+  try {
+    const s = localStorage.getItem("veladesk-profile");
+    return s ? { ...EMPTY_PROFILE, ...JSON.parse(s) } : EMPTY_PROFILE;
+  } catch {
+    return EMPTY_PROFILE;
+  }
+}
+
+function TabPerfil() {
+  const [profile, setProfile] = useState<CompanyProfile>(loadProfile());
+  const [theme, setTheme] = useState<ThemeKey>(
+    () => (localStorage.getItem("veladesk-theme") as ThemeKey) ?? "blue",
+  );
+  const [saved, setSaved] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const set = (k: keyof CompanyProfile, v: string) =>
+    setProfile((p) => ({ ...p, [k]: v }));
+
+  const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => set("logo", ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleTheme = (key: ThemeKey) => {
+    setTheme(key);
+    applyTheme(key);
+  };
+
+  const handleSave = () => {
+    localStorage.setItem("veladesk-profile", JSON.stringify(profile));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const inputCls =
+    "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-400 bg-white";
+  const labelCls =
+    "block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5";
+
+  return (
+    <div className="space-y-8 max-w-3xl">
+      {/* ── Logo + datos empresa ── */}
+      <section>
+        <div className="flex items-center gap-2 mb-5">
+          <Building2 size={15} style={{ color: "#C9A96E" }} />
+          <h3
+            className="text-sm font-bold uppercase tracking-widest"
+            style={{ color: "#0A1628" }}
+          >
+            Datos de la Empresa
+          </h3>
+        </div>
+
+        {/* Logo upload */}
+        <div className="flex items-center gap-5 mb-6">
+          <div
+            className="w-24 h-24 rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer border-2 border-dashed transition-all hover:border-gold-400"
+            style={{
+              borderColor: profile.logo ? "transparent" : "#E2E8F0",
+              background: "#F8FAFC",
+            }}
+            onClick={() => fileRef.current?.click()}
+          >
+            {profile.logo ? (
+              <img
+                src={profile.logo}
+                alt="Logo"
+                className="w-full h-full object-contain p-2"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-1">
+                <Upload size={20} style={{ color: "#CBD5E1" }} />
+                <span
+                  className="text-xs text-center"
+                  style={{ color: "#94A3B8" }}
+                >
+                  Logo
+                </span>
+              </div>
+            )}
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleLogo}
+          />
+          <div>
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="text-sm font-medium px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
+              style={{ color: "#374151" }}
+            >
+              {profile.logo ? "Cambiar logo" : "Subir logo"}
+            </button>
+            {profile.logo && (
+              <button
+                onClick={() => set("logo", "")}
+                className="ml-2 text-sm text-red-400 hover:text-red-600 transition-colors"
+              >
+                Quitar
+              </button>
+            )}
+            <p className="text-xs mt-1.5" style={{ color: "#94A3B8" }}>
+              PNG, JPG o SVG. Máx 2MB.
+            </p>
+          </div>
+        </div>
+
+        {/* Campos empresa */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <label className={labelCls}>
+              Razón Social / Nombre de la empresa
+            </label>
+            <input
+              className={inputCls}
+              value={profile.name}
+              onChange={(e) => set("name", e.target.value)}
+              placeholder="Funeraria San Martín Ltda."
+            />
+          </div>
+          <div>
+            <label className={labelCls}>RUT Empresa</label>
+            <input
+              className={inputCls}
+              value={profile.rut}
+              onChange={(e) => set("rut", e.target.value)}
+              placeholder="76.123.456-7"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Ciudad / Comuna</label>
+            <input
+              className={inputCls}
+              value={profile.city}
+              onChange={(e) => set("city", e.target.value)}
+              placeholder="Santiago, Las Condes"
+            />
+          </div>
+          <div className="col-span-2">
+            <label className={labelCls}>
+              <MapPin size={10} className="inline mr-1" />
+              Dirección
+            </label>
+            <input
+              className={inputCls}
+              value={profile.address}
+              onChange={(e) => set("address", e.target.value)}
+              placeholder="Av. Principal 1234, Oficina 5"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>
+              <Phone size={10} className="inline mr-1" />
+              Teléfono principal
+            </label>
+            <input
+              className={inputCls}
+              value={profile.phone1}
+              onChange={(e) => set("phone1", e.target.value)}
+              placeholder="+56 2 1234 5678"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>
+              <Phone size={10} className="inline mr-1" />
+              Teléfono secundario
+            </label>
+            <input
+              className={inputCls}
+              value={profile.phone2}
+              onChange={(e) => set("phone2", e.target.value)}
+              placeholder="+56 9 8765 4321"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>
+              <Mail size={10} className="inline mr-1" />
+              Correo de contacto
+            </label>
+            <input
+              className={inputCls}
+              value={profile.email}
+              onChange={(e) => set("email", e.target.value)}
+              placeholder="contacto@funeraria.cl"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>
+              <Globe size={10} className="inline mr-1" />
+              Sitio web
+            </label>
+            <input
+              className={inputCls}
+              value={profile.website}
+              onChange={(e) => set("website", e.target.value)}
+              placeholder="www.funeraria.cl"
+            />
+          </div>
+          <div className="col-span-2">
+            <label className={labelCls}>Descripción / Eslogan</label>
+            <textarea
+              className={inputCls}
+              rows={2}
+              value={profile.description}
+              onChange={(e) => set("description", e.target.value)}
+              placeholder="Más de 30 años acompañando a las familias…"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Datos representante ── */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Users size={14} style={{ color: "#C9A96E" }} />
+          <h3
+            className="text-sm font-bold uppercase tracking-widest"
+            style={{ color: "#0A1628" }}
+          >
+            Representante Legal
+          </h3>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Nombre completo</label>
+            <input
+              className={inputCls}
+              value={profile.ownerName}
+              onChange={(e) => set("ownerName", e.target.value)}
+              placeholder="Juan Pérez González"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>Teléfono directo</label>
+            <input
+              className={inputCls}
+              value={profile.ownerPhone}
+              onChange={(e) => set("ownerPhone", e.target.value)}
+              placeholder="+56 9 1234 5678"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Tema del software ── */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Palette size={14} style={{ color: "#C9A96E" }} />
+          <h3
+            className="text-sm font-bold uppercase tracking-widest"
+            style={{ color: "#0A1628" }}
+          >
+            Tema del Software
+          </h3>
+        </div>
+        <p className="text-sm mb-5" style={{ color: "#64748B" }}>
+          Elige el color del menú lateral y los elementos principales del
+          sistema.
+        </p>
+        <div className="grid grid-cols-3 gap-4">
+          {(
+            Object.entries(THEMES) as [ThemeKey, (typeof THEMES)[ThemeKey]][]
+          ).map(([key, t]) => {
+            const active = theme === key;
+            return (
+              <button
+                key={key}
+                onClick={() => handleTheme(key)}
+                className="relative rounded-2xl overflow-hidden transition-all duration-200 text-left"
+                style={{
+                  border: active ? `2px solid ${t.hex}` : "2px solid #E2E8F0",
+                  boxShadow: active ? `0 4px 20px ${t.hex}40` : "none",
+                  transform: active ? "scale(1.02)" : "scale(1)",
+                }}
+              >
+                {/* preview sidebar strip */}
+                <div
+                  className="h-20 flex items-stretch gap-0"
+                  style={{ background: "#F8FAFC" }}
+                >
+                  {/* fake sidebar */}
+                  <div
+                    className="w-14 flex flex-col gap-1.5 p-2"
+                    style={{
+                      background: `linear-gradient(180deg, ${t.brandDark} 0%, ${t.brand} 100%)`,
+                    }}
+                  >
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="h-2 rounded-sm"
+                        style={{
+                          background:
+                            i === 2 ? t.brandText : "rgba(255,255,255,0.15)",
+                          width: i === 2 ? "90%" : `${50 + i * 10}%`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  {/* fake content */}
+                  <div className="flex-1 p-2.5 space-y-1.5">
+                    <div className="h-2 rounded bg-slate-200 w-3/4" />
+                    <div className="h-1.5 rounded bg-slate-100 w-full" />
+                    <div className="h-1.5 rounded bg-slate-100 w-5/6" />
+                    <div
+                      className="h-5 rounded-lg mt-1"
+                      style={{ background: t.brand, width: "60%" }}
+                    />
+                  </div>
+                </div>
+                {/* label */}
+                <div
+                  className="px-3 py-2.5 flex items-center justify-between bg-white"
+                  style={{ borderTop: "1px solid #F1F5F9" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                      style={{ background: t.hex }}
+                    />
+                    <span
+                      className="text-xs font-semibold"
+                      style={{ color: "#1E293B" }}
+                    >
+                      {t.label}
+                    </span>
+                  </div>
+                  {active && (
+                    <div
+                      className="w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ background: t.hex }}
+                    >
+                      <Check size={10} color="white" />
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── Guardar ── */}
+      <div className="flex items-center gap-3 pt-2">
+        <button
+          onClick={handleSave}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm btn-gold"
+        >
+          <span className="relative z-10 flex items-center gap-2">
+            {saved ? (
+              <>
+                <Check size={14} /> Guardado
+              </>
+            ) : (
+              "Guardar cambios"
+            )}
+          </span>
+        </button>
+        {saved && (
+          <span
+            className="text-sm font-medium animate-fade-in"
+            style={{ color: "#10B981" }}
+          >
+            ✓ Los cambios se guardaron correctamente
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
    MAIN
    ════════════════════════════════════════════════════ */
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState("usuarios");
+  const [activeTab, setActiveTab] = useState("perfil");
 
   return (
     <div className="flex flex-col h-screen">
@@ -987,6 +1408,7 @@ export default function Admin() {
 
       {/* content */}
       <div className="flex-1 overflow-auto p-6">
+        {activeTab === "perfil" && <TabPerfil />}
         {activeTab === "usuarios" && <TabUsuarios />}
         {activeTab === "convenios" && <TabConvenios />}
         {activeTab === "servicios" && <TabServicios />}

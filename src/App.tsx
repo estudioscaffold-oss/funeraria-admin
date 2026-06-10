@@ -1,5 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
+import { loadTheme } from "./lib/theme";
+
+// Aplica el tema guardado antes de renderizar
+loadTheme();
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import Progress from "./pages/Progress";
