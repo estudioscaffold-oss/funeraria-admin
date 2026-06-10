@@ -5,13 +5,30 @@ import {
   Users,
   Settings,
   ChevronRight,
+  Truck,
+  DollarSign,
+  UserCheck,
+  Lock,
 } from "lucide-react";
 
 const NAV = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/progreso", icon: Activity, label: "Progreso" },
-  { to: "/fallecidos", icon: Users, label: "Fichas de Fallecidos" },
-  { to: "/admin", icon: Settings, label: "Administrador" },
+  { to: "/", icon: LayoutDashboard, label: "Dashboard", mock: false },
+  { to: "/progreso", icon: Activity, label: "Progreso", mock: false },
+  {
+    to: "/fallecidos",
+    icon: Users,
+    label: "Fichas de Fallecidos",
+    mock: false,
+  },
+  { to: "/flota", icon: Truck, label: "Gestión de Flota", mock: true },
+  {
+    to: "/finanzas",
+    icon: DollarSign,
+    label: "Gestión Financiera",
+    mock: true,
+  },
+  { to: "/personal", icon: UserCheck, label: "Personal", mock: true },
+  { to: "/admin", icon: Settings, label: "Administrador", mock: false },
 ];
 
 function VelodeskLogo() {
@@ -112,11 +129,56 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto py-2">
-        {NAV.map(({ to, icon: Icon, label }) => {
+        {NAV.map(({ to, icon: Icon, label, mock }) => {
           const isActive =
-            to === "/"
+            !mock &&
+            (to === "/"
               ? location.pathname === "/"
-              : location.pathname.startsWith(to);
+              : location.pathname.startsWith(to));
+
+          /* ── Mock / Próximamente ── */
+          if (mock) {
+            return (
+              <div
+                key={to}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-not-allowed select-none group"
+                style={{ opacity: 0.45 }}
+                title="Próximamente"
+              >
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{
+                    background: "rgba(17,34,68,0.4)",
+                    border: "1px dashed rgba(201,169,110,0.2)",
+                  }}
+                >
+                  <Icon
+                    size={15}
+                    strokeWidth={1.5}
+                    style={{ color: "#8FA3B8" }}
+                  />
+                </div>
+                <span
+                  className="flex-1 text-sm font-medium"
+                  style={{ color: "#8FA3B8" }}
+                >
+                  {label}
+                </span>
+                <span
+                  className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full shrink-0"
+                  style={{
+                    background: "rgba(201,169,110,0.08)",
+                    color: "#C9A96E",
+                    border: "1px solid rgba(201,169,110,0.2)",
+                  }}
+                >
+                  <Lock size={9} /> Pronto
+                </span>
+              </div>
+            );
+          }
+
+          /* ── Active nav item ── */
           return (
             <NavLink
               key={to}
@@ -132,9 +194,7 @@ export default function Sidebar() {
               }
             >
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                  isActive ? "shadow-gold-sm" : ""
-                }`}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${isActive ? "shadow-gold-sm" : ""}`}
                 style={{
                   background: isActive
                     ? "linear-gradient(135deg,#D4AF70,#A07840)"
@@ -143,12 +203,10 @@ export default function Sidebar() {
               >
                 <Icon
                   size={15}
-                  className={
-                    isActive
-                      ? "text-navy-950"
-                      : "text-cream-500 group-hover:text-gold-400"
-                  }
                   style={{ color: isActive ? "#060E1A" : undefined }}
+                  className={
+                    isActive ? "" : "text-cream-500 group-hover:text-gold-400"
+                  }
                   strokeWidth={isActive ? 2.5 : 2}
                 />
               </div>
@@ -161,9 +219,7 @@ export default function Sidebar() {
               <ChevronRight
                 size={13}
                 style={{ color: "#C9A96E" }}
-                className={`transition-all duration-200 ${
-                  isActive ? "opacity-100" : "opacity-0 group-hover:opacity-50"
-                }`}
+                className={`transition-all duration-200 ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`}
               />
             </NavLink>
           );
