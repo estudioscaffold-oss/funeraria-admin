@@ -763,8 +763,10 @@ function DeceasedCard({
   now: Date;
 }) {
   const navigate = useNavigate();
-  const { addTask } = useApp();
+  const { addTask, updateDeceased } = useApp();
   const [open, setOpen] = useState(false);
+  const [addingTask, setAddingTask] = useState(false);
+  const [newTaskName, setNewTaskName] = useState("");
 
   const origin = new Date(`${d.deathDate}T${d.deathTime || "00:00"}:00`);
   const deadline = getDeadline(d.deathDate, d.deathTime);
@@ -790,24 +792,34 @@ function DeceasedCard({
       ? `${differenceInHours(deadline, now)}h ${differenceInMinutes(deadline, now) % 60}m restantes`
       : `${differenceInMinutes(deadline, now)}m restantes`;
 
+  // Carga las 10 etapas predeterminadas — reemplaza las existentes
   const handleAddDefaultTasks = (e: React.MouseEvent) => {
     e.stopPropagation();
-    generateDefaultTasks(d.deathDate, d.deathTime).forEach((t, i) =>
-      addTask(d.id, { ...t, id: crypto.randomUUID(), order: tasks.length + i }),
+    const newTasks = generateDefaultTasks(d.deathDate, d.deathTime).map(
+      (t, i) => ({ ...t, id: crypto.randomUUID(), order: i }),
     );
+    // Reemplaza todas las tareas actuales con las predeterminadas
+    updateDeceased(d.id, { tasks: newTasks });
   };
 
+  // Agregar tarea personalizada
   const handleAddTask = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const name = prompt("Nombre de la tarea:");
-    if (!name) return;
+    setAddingTask(true);
+    setNewTaskName("");
+  };
+
+  const confirmAddTask = () => {
+    if (!newTaskName.trim()) return;
     addTask(d.id, {
       id: crypto.randomUUID(),
-      name,
+      name: newTaskName.trim(),
       status: "pendiente",
       order: tasks.length,
       description: "",
     });
+    setAddingTask(false);
+    setNewTaskName("");
   };
 
   return (
@@ -1006,10 +1018,22 @@ function DeceasedCard({
                 )}
               </div>
               <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleAddDefaultTasks}
+                  className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors border"
+                  style={{
+                    background: "#0A1628",
+                    color: "#D4AF70",
+                    borderColor: "#0A1628",
+                  }}
+                  title="Carga las 10 etapas del proceso (reemplaza las existentes)"
+                >
+                  ↺ Cargar etapas
+                </button>
                 {tasks.length === 0 && (
                   <button
                     onClick={handleAddDefaultTasks}
-                    className="text-xs text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg font-medium transition-colors border border-indigo-200"
+                    className="hidden text-xs text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg font-medium transition-colors border border-indigo-200"
                   >
                     Cargar predeterminadas
                   </button>
@@ -1040,18 +1064,30 @@ function DeceasedCard({
               </div>
             )}
 
-            {/* task rows */}
-            {tasks.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
-                <p className="text-sm">Sin tareas asignadas</p>
+            {/* empty state */}
+            {tasks.length === 0 && !addingTask && (
+              <div className="text-center py-10 rounded-2xl border-2 border-dashed border-slate-200">
+                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                  <Clock size={20} className="text-slate-400" />
+                </div>
+                <p className="text-sm font-medium text-slate-500 mb-1">
+                  Sin etapas asignadas
+                </p>
+                <p className="text-xs text-slate-400 mb-4">
+                  Carga las etapas del proceso o agrega una manualmente
+                </p>
                 <button
                   onClick={handleAddDefaultTasks}
-                  className="mt-2 text-indigo-600 text-sm hover:underline font-medium"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:opacity-90"
+                  style={{ background: "#0A1628", color: "#D4AF70" }}
                 >
-                  Cargar tareas predeterminadas del proceso
+                  Cargar etapas predeterminadas del proceso
                 </button>
               </div>
-            ) : (
+            )}
+
+            {/* task list */}
+            {tasks.length > 0 && (
               <div className="space-y-2">
                 {tasks.map((task) => (
                   <TaskRow
@@ -1062,6 +1098,50 @@ function DeceasedCard({
                   />
                 ))}
               </div>
+            )}
+
+            {/* inline add task form */}
+            {addingTask ? (
+              <div
+                className="flex items-center gap-2 p-3 rounded-xl border-2 border-dashed mt-2"
+                style={{
+                  borderColor: "rgba(201,169,110,0.4)",
+                  background: "rgba(201,169,110,0.04)",
+                }}
+              >
+                <input
+                  autoFocus
+                  className={inputCls + " flex-1"}
+                  value={newTaskName}
+                  onChange={(e) => setNewTaskName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") confirmAddTask();
+                    if (e.key === "Escape") setAddingTask(false);
+                  }}
+                  placeholder="Nombre de la nueva etapa…"
+                />
+                <button
+                  onClick={confirmAddTask}
+                  disabled={!newTaskName.trim()}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40 transition-all"
+                  style={{ background: "#0A1628", color: "#D4AF70" }}
+                >
+                  <Check size={14} />
+                </button>
+                <button
+                  onClick={() => setAddingTask(false)}
+                  className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleAddTask}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-slate-200 text-xs font-medium text-slate-400 hover:border-slate-300 hover:text-slate-600 hover:bg-slate-50 transition-all mt-2"
+              >
+                <Plus size={12} /> Agregar etapa personalizada
+              </button>
             )}
           </div>
         </div>
