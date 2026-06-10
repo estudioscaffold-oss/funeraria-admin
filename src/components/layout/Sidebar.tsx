@@ -9,11 +9,14 @@ import {
   DollarSign,
   UserCheck,
   Lock,
+  Package,
+  ContactRound,
 } from "lucide-react";
 
 const NAV = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard", mock: false },
   { to: "/progreso", icon: Activity, label: "Progreso", mock: false },
+  { to: "/clientes", icon: ContactRound, label: "Ficha Clientes", mock: true },
   {
     to: "/fallecidos",
     icon: Users,
@@ -27,6 +30,7 @@ const NAV = [
     label: "Gestión Financiera",
     mock: false,
   },
+  { to: "/inventario", icon: Package, label: "Inventario", mock: true },
   { to: "/personal", icon: UserCheck, label: "Personal", mock: false },
   { to: "/admin", icon: Settings, label: "Administrador", mock: false },
 ];
