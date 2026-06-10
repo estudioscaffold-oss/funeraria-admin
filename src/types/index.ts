@@ -1,3 +1,38 @@
+/* ─── Financial types ───────────────────────── */
+export interface Expense {
+  id: string;
+  date: string; // YYYY-MM-DD
+  category:
+    | "vehiculos"
+    | "personal"
+    | "instalaciones"
+    | "insumos"
+    | "servicios"
+    | "otros";
+  description: string;
+  amount: number;
+  paidTo?: string;
+}
+
+export interface CreditInstallment {
+  id: string;
+  dueDate: string; // YYYY-MM-DD
+  amount: number;
+  method: "cheque" | "cuota" | "transferencia" | "otro";
+  status: "pendiente" | "cobrado" | "vencido";
+  reference?: string;
+}
+
+export interface CreditPlan {
+  id: string;
+  deceasedId: string;
+  deceasedName: string;
+  clientName: string;
+  totalAmount: number;
+  installments: CreditInstallment[];
+  createdAt: string;
+}
+
 export type ServiceType =
   | "inhumacion"
   | "cremacion"

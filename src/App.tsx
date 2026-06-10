@@ -8,6 +8,7 @@ import DeceasedDetail from "./pages/DeceasedDetail";
 import DeceasedForm from "./pages/DeceasedForm";
 import Admin from "./pages/Admin";
 import Personal from "./pages/Personal";
+import Finanzas from "./pages/Finanzas";
 
 function LoadingScreen() {
   return (
@@ -126,6 +127,7 @@ function AppRoutes() {
           <Route path="/fallecidos/:id" element={<DeceasedDetail />} />
           <Route path="/fallecidos/:id/editar" element={<DeceasedForm />} />
           <Route path="/personal" element={<Personal />} />
+          <Route path="/finanzas" element={<Finanzas />} />
           <Route path="/admin" element={<Admin />} />
         </Route>
       </Routes>

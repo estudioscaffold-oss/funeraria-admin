@@ -25,7 +25,7 @@ const NAV = [
     to: "/finanzas",
     icon: DollarSign,
     label: "Gestión Financiera",
-    mock: true,
+    mock: false,
   },
   { to: "/personal", icon: UserCheck, label: "Personal", mock: false },
   { to: "/admin", icon: Settings, label: "Administrador", mock: false },
