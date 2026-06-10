@@ -189,6 +189,15 @@ export interface QuoteItem {
   unitPrice: number;
 }
 
+export type ShiftType = "mañana" | "tarde" | "noche" | "libre";
+
+export interface ShiftAssignment {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  shift: ShiftType;
+}
+
 export interface Quote {
   id: string;
   deceasedId?: string;
