@@ -30,7 +30,7 @@ const NAV = [
     label: "Gestión Financiera",
     mock: false,
   },
-  { to: "/inventario", icon: Package, label: "Inventario", mock: true },
+  { to: "/inventario", icon: Package, label: "Inventario", mock: false },
   { to: "/personal", icon: UserCheck, label: "Personal", mock: false },
   { to: "/admin", icon: Settings, label: "Administrador", mock: false },
 ];

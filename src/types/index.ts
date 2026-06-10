@@ -1,3 +1,31 @@
+/* ─── Inventory types ───────────────────────── */
+export type InventoryCategory =
+  | "ataudes_urnas"
+  | "preparacion"
+  | "velatorio"
+  | "traslado"
+  | "ceremonia"
+  | "documentacion"
+  | "limpieza"
+  | "oficina"
+  | "otro";
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: InventoryCategory;
+  sku?: string; // código interno
+  quantity: number;
+  unit: string; // unidad, caja, kg, litros, metros…
+  unitPrice: number; // valor por unidad
+  description?: string; // características / observaciones
+  minStock?: number; // stock mínimo de alerta
+  location?: string; // ubicación en bodega
+  supplier?: string; // proveedor
+  createdAt: string;
+  updatedAt: string;
+}
+
 /* ─── Fleet types ───────────────────────────── */
 export type VehicleType =
   | "carroza_funebre"
