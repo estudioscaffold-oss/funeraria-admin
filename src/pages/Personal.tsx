@@ -138,7 +138,7 @@ function StaffCard({
       onDragStart={() => onDragStart(user.id)}
       className="rounded-xl overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-[1.01] select-none"
       style={{
-        background: "rgba(13,30,53,0.8)",
+        background: "#FFFFFF",
         border: `1px solid ${pal.border}`,
       }}
     >
@@ -162,7 +162,7 @@ function StaffCard({
         <div className="flex-1 min-w-0">
           <p
             className="text-sm font-semibold truncate"
-            style={{ color: "#F0EDE8" }}
+            style={{ color: "#1E293B" }}
           >
             {user.fullName}
           </p>
@@ -180,7 +180,7 @@ function StaffCard({
           </span>
           <ChevronDown
             size={13}
-            style={{ color: "#8FA3B8" }}
+            style={{ color: "#64748B" }}
             className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           />
         </div>
@@ -195,7 +195,7 @@ function StaffCard({
           {user.phone && (
             <div
               className="flex items-center gap-2"
-              style={{ color: "#8FA3B8" }}
+              style={{ color: "#64748B" }}
             >
               <Phone size={11} style={{ color: pal.text }} />
               {user.phone}
@@ -204,7 +204,7 @@ function StaffCard({
           {user.email && (
             <div
               className="flex items-center gap-2"
-              style={{ color: "#8FA3B8" }}
+              style={{ color: "#64748B" }}
             >
               <Mail size={11} style={{ color: pal.text }} />
               {user.email}
@@ -213,7 +213,7 @@ function StaffCard({
           {user.sucursal && (
             <div
               className="flex items-center gap-2"
-              style={{ color: "#8FA3B8" }}
+              style={{ color: "#64748B" }}
             >
               <MapPin size={11} style={{ color: pal.text }} />
               {user.sucursal}
@@ -429,12 +429,12 @@ export default function Personal() {
     assignments.filter((a) => a.date === dateKey(date)).length;
 
   return (
-    <div className="flex h-full overflow-hidden" style={{ color: "#F0EDE8" }}>
+    <div className="flex h-full overflow-hidden" style={{ color: "#1E293B" }}>
       {/* ══ LEFT PANEL — Staff list ══ */}
       <div
         className="w-64 shrink-0 flex flex-col h-full border-r overflow-hidden"
         style={{
-          background: "rgba(6,14,26,0.6)",
+          background: "#F8FAFC",
           borderColor: "rgba(201,169,110,0.12)",
         }}
       >
@@ -477,12 +477,12 @@ export default function Personal() {
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
           {activeUsers.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-sm" style={{ color: "#8FA3B8" }}>
+              <p className="text-sm" style={{ color: "#64748B" }}>
                 Sin personal activo
               </p>
               <p
                 className="text-xs mt-1"
-                style={{ color: "rgba(143,163,184,0.5)" }}
+                style={{ color: "#94A3B8" }}
               >
                 Agrega personal en Administrador
               </p>
@@ -507,9 +507,9 @@ export default function Personal() {
           {SHIFTS.map((s) => (
             <div key={s.key} className="flex items-center gap-2 py-1">
               <s.Icon size={11} style={{ color: "#C9A96E" }} />
-              <span className="text-xs" style={{ color: "#8FA3B8" }}>
+              <span className="text-xs" style={{ color: "#64748B" }}>
                 {s.label}{" "}
-                <span style={{ color: "rgba(143,163,184,0.5)" }}>
+                <span style={{ color: "#94A3B8" }}>
                   {s.hours}
                 </span>
               </span>
@@ -539,7 +539,7 @@ export default function Personal() {
             </button>
             <span
               className="text-base font-semibold capitalize min-w-[200px] text-center"
-              style={{ color: "#F0EDE8" }}
+              style={{ color: "#1E293B" }}
             >
               {navLabel}
             </span>
@@ -583,7 +583,7 @@ export default function Personal() {
                         background: "linear-gradient(135deg,#D4AF70,#A07840)",
                         color: "#060E1A",
                       }
-                    : { color: "#8FA3B8", background: "transparent" }
+                    : { color: "#64748B", background: "transparent" }
                 }
               >
                 {v === "semana" ? (
@@ -619,7 +619,7 @@ export default function Personal() {
                       <div className="flex flex-col items-center gap-1">
                         <span
                           className="text-xs font-medium uppercase tracking-wide"
-                          style={{ color: "rgba(143,163,184,0.7)" }}
+                          style={{ color: "#94A3B8" }}
                         >
                           {format(d, "EEE", { locale: es })}
                         </span>
@@ -632,7 +632,7 @@ export default function Personal() {
                                     "linear-gradient(135deg,#D4AF70,#A07840)",
                                   color: "#060E1A",
                                 }
-                              : { color: "#F0EDE8" }
+                              : { color: "#1E293B" }
                           }
                         >
                           {format(d, "d")}
@@ -658,7 +658,7 @@ export default function Personal() {
                           </p>
                           <p
                             className="text-xs"
-                            style={{ color: "rgba(143,163,184,0.5)" }}
+                            style={{ color: "#94A3B8" }}
                           >
                             {shift.hours}
                           </p>

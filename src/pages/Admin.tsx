@@ -30,7 +30,7 @@ const TABS = [
 ];
 
 const inputCls =
-  "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white";
+  "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-400 bg-white";
 
 /* ════════════════════════════════════════════════════
    USUARIOS
@@ -82,7 +82,7 @@ function TabUsuarios() {
         </p>
         <button
           onClick={openNew}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+          className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 hover:bg-navy-800 transition-colors shadow-sm"
         >
           <Plus size={15} /> Nuevo Usuario
         </button>
@@ -90,7 +90,7 @@ function TabUsuarios() {
 
       {/* Form modal */}
       {editing !== null && (
-        <div className="bg-white rounded-xl border border-indigo-200 shadow-md p-5 space-y-4">
+        <div className="bg-white rounded-xl border border-gold-200 shadow-md p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-800 text-sm">
               {editing === "new"
@@ -202,7 +202,7 @@ function TabUsuarios() {
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
             >
               <Check size={14} /> Guardar
             </button>
@@ -250,7 +250,7 @@ function TabUsuarios() {
               <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold text-xs shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-navy-800 text-gold-400 flex items-center justify-center font-semibold text-xs shrink-0">
                       {u.fullName.charAt(0)}
                     </div>
                     <div>
@@ -287,7 +287,7 @@ function TabUsuarios() {
                   <div className="flex items-center justify-center gap-1">
                     <button
                       onClick={() => openEdit(u)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gold-200 text-navy-900 hover:bg-navy-900 hover:text-white transition-all"
                     >
                       <Edit size={12} /> Editar
                     </button>
@@ -355,14 +355,14 @@ function TabConvenios() {
         </p>
         <button
           onClick={openNew}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+          className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 hover:bg-navy-800 transition-colors shadow-sm"
         >
           <Plus size={15} /> Nuevo Convenio
         </button>
       </div>
 
       {editing !== null && (
-        <div className="bg-white rounded-xl border border-indigo-200 shadow-md p-5 space-y-4">
+        <div className="bg-white rounded-xl border border-gold-200 shadow-md p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-800 text-sm">
               {editing === "new"
@@ -518,7 +518,7 @@ function TabConvenios() {
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
             >
               <Check size={14} /> Guardar
             </button>
@@ -607,7 +607,7 @@ function TabConvenios() {
                   <div className="flex items-center justify-center gap-1">
                     <button
                       onClick={() => openEdit(c)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gold-200 text-navy-900 hover:bg-navy-900 hover:text-white transition-all"
                     >
                       <Edit size={12} /> Editar
                     </button>
@@ -703,7 +703,7 @@ function TabServicios() {
                 e.stopPropagation();
                 openAdd(cat.id);
               }}
-              className="flex items-center gap-1 text-xs text-indigo-600 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg font-medium transition-colors"
+              className="flex items-center gap-1 text-xs text-navy-900 hover:bg-slate-100 px-2.5 py-1.5 rounded-lg font-medium transition-colors"
             >
               <Plus size={12} /> Agregar ítem
             </button>
@@ -711,7 +711,7 @@ function TabServicios() {
 
           {/* inline add/edit form */}
           {editingItem?.catId === cat.id && (
-            <div className="px-5 py-3 bg-indigo-50 border-b border-indigo-100 flex items-end gap-3">
+            <div className="px-5 py-3 bg-slate-50 border-b border-indigo-100 flex items-end gap-3">
               <div className="flex-1">
                 <label className="text-xs font-medium text-slate-600 block mb-1">
                   {editingItem.item ? "Editar nombre" : "Nombre del servicio"} *
@@ -750,7 +750,7 @@ function TabServicios() {
                 </button>
                 <button
                   onClick={handleSaveItem}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-white rounded-lg hover:bg-navy-800 font-medium"
                 >
                   <Check size={13} /> {editingItem.item ? "Guardar" : "Agregar"}
                 </button>
@@ -784,7 +784,7 @@ function TabServicios() {
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => openEditItem(cat.id, item)}
-                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-navy-900 hover:bg-slate-50 rounded-lg transition-colors"
                       >
                         <Edit size={13} />
                       </button>
@@ -852,7 +852,7 @@ function TabCategorias() {
         />
         <button
           onClick={handleAdd}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors whitespace-nowrap shadow-sm"
+          className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 hover:bg-navy-800 transition-colors whitespace-nowrap shadow-sm"
         >
           <Plus size={15} /> Agregar
         </button>
@@ -876,7 +876,7 @@ function TabCategorias() {
               </span>
               {editingId === cat.id ? (
                 <input
-                  className="flex-1 border border-indigo-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="flex-1 border border-indigo-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold-400"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   onKeyDown={(e) => {
@@ -915,7 +915,7 @@ function TabCategorias() {
                 <>
                   <button
                     onClick={() => startEdit(cat.id, cat.name)}
-                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                    className="p-1.5 text-slate-400 hover:text-navy-900 hover:bg-slate-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                   >
                     <Edit size={14} />
                   </button>

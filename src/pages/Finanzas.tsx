@@ -329,7 +329,7 @@ function CustomTooltip({ active, payload, label }: any) {
     <div
       className="rounded-xl p-3 text-xs space-y-1.5 shadow-xl"
       style={{
-        background: "#0D1E35",
+        background: "#FFFFFF",
         border: "1px solid rgba(201,169,110,0.3)",
       }}
     >
@@ -343,8 +343,8 @@ function CustomTooltip({ active, payload, label }: any) {
             className="w-2 h-2 rounded-full"
             style={{ background: p.fill }}
           />
-          <span style={{ color: "#8FA3B8" }}>{p.name}:</span>
-          <span className="font-semibold" style={{ color: "#F0EDE8" }}>
+          <span style={{ color: "#64748B" }}>{p.name}:</span>
+          <span className="font-semibold" style={{ color: "#1E293B" }}>
             {p.dataKey === "servicios" ? p.value : fmt$(p.value)}
           </span>
         </div>
@@ -407,14 +407,14 @@ function KpiCard({
           </div>
         )}
       </div>
-      <p className="text-2xl font-bold mt-1" style={{ color: "#F0EDE8" }}>
+      <p className="text-2xl font-bold mt-1" style={{ color: "#1E293B" }}>
         {value}
       </p>
-      <p className="text-xs font-medium mt-0.5" style={{ color: "#8FA3B8" }}>
+      <p className="text-xs font-medium mt-0.5" style={{ color: "#64748B" }}>
         {label}
       </p>
       {sub && (
-        <p className="text-xs mt-1" style={{ color: "rgba(143,163,184,0.6)" }}>
+        <p className="text-xs mt-1" style={{ color: "#94A3B8" }}>
           {sub}
         </p>
       )}
@@ -441,7 +441,7 @@ function CreditRow({ plan, now }: { plan: CreditPlan; now: Date }) {
     <div
       className="rounded-xl overflow-hidden transition-all"
       style={{
-        background: "rgba(13,30,53,0.7)",
+        background: "#FFFFFF",
         border: "1px solid rgba(201,169,110,0.12)",
       }}
     >
@@ -452,11 +452,11 @@ function CreditRow({ plan, now }: { plan: CreditPlan; now: Date }) {
         <div className="flex-1 min-w-0">
           <p
             className="text-sm font-semibold truncate"
-            style={{ color: "#F0EDE8" }}
+            style={{ color: "#1E293B" }}
           >
             {plan.clientName}
           </p>
-          <p className="text-xs truncate" style={{ color: "#8FA3B8" }}>
+          <p className="text-xs truncate" style={{ color: "#64748B" }}>
             {plan.deceasedName}
           </p>
         </div>
@@ -464,7 +464,7 @@ function CreditRow({ plan, now }: { plan: CreditPlan; now: Date }) {
           <p className="text-sm font-bold" style={{ color: "#D4AF70" }}>
             {fmtFull(plan.totalAmount)}
           </p>
-          <p className="text-xs" style={{ color: "#8FA3B8" }}>
+          <p className="text-xs" style={{ color: "#64748B" }}>
             total acuerdo
           </p>
         </div>
@@ -480,7 +480,7 @@ function CreditRow({ plan, now }: { plan: CreditPlan; now: Date }) {
         )}
         <ChevronRight
           size={14}
-          style={{ color: "#8FA3B8" }}
+          style={{ color: "#64748B" }}
           className={`transition-transform shrink-0 ${open ? "rotate-90" : ""}`}
         />
       </div>
@@ -524,11 +524,11 @@ function CreditRow({ plan, now }: { plan: CreditPlan; now: Date }) {
                     : "1px solid transparent",
                 }}
               >
-                <span style={{ color: "#8FA3B8" }}>Cuota {idx + 1}</span>
-                <span className="font-semibold" style={{ color: "#F0EDE8" }}>
+                <span style={{ color: "#64748B" }}>Cuota {idx + 1}</span>
+                <span className="font-semibold" style={{ color: "#1E293B" }}>
                   {fmtFull(inst.amount)}
                 </span>
-                <span style={{ color: "#8FA3B8" }}>
+                <span style={{ color: "#64748B" }}>
                   {format(parseISO(inst.dueDate), "d MMM yyyy", { locale: es })}
                 </span>
                 <span
@@ -541,7 +541,7 @@ function CreditRow({ plan, now }: { plan: CreditPlan; now: Date }) {
                   {inst.method}
                 </span>
                 {inst.reference && (
-                  <span style={{ color: "rgba(143,163,184,0.5)" }}>
+                  <span style={{ color: "#94A3B8" }}>
                     {inst.reference}
                   </span>
                 )}
@@ -673,7 +673,7 @@ export default function Finanzas() {
   const monthLabel = format(now, "MMMM yyyy", { locale: es });
 
   return (
-    <div className="p-8 space-y-8 overflow-auto" style={{ color: "#F0EDE8" }}>
+    <div className="p-8 space-y-8 overflow-auto" style={{ color: "#1E293B" }}>
       {/* ── Header ── */}
       <div className="animate-fade-in">
         <p
@@ -685,7 +685,7 @@ export default function Finanzas() {
         <div className="flex items-center justify-between">
           <h1
             className="text-3xl font-bold capitalize"
-            style={{ color: "#F0EDE8" }}
+            style={{ color: "#1E293B" }}
           >
             {monthLabel}
           </h1>
@@ -781,7 +781,7 @@ export default function Finanzas() {
             >
               Proyección — Servicios · Ingresos · Egresos
             </h2>
-            <p className="text-xs mt-0.5" style={{ color: "#8FA3B8" }}>
+            <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>
               Último periodo · barras sólidas = real · translúcido = estimado
             </p>
           </div>
@@ -802,7 +802,7 @@ export default function Finanzas() {
                           background: "linear-gradient(135deg,#D4AF70,#A07840)",
                           color: "#060E1A",
                         }
-                      : { color: "#8FA3B8", background: "transparent" }
+                      : { color: "#64748B", background: "transparent" }
                   }
                 >
                   {p}
@@ -840,8 +840,8 @@ export default function Finanzas() {
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend
-              wrapperStyle={{ paddingTop: 16, fontSize: 12, color: "#8FA3B8" }}
-              formatter={(v) => <span style={{ color: "#8FA3B8" }}>{v}</span>}
+              wrapperStyle={{ paddingTop: 16, fontSize: 12, color: "#64748B" }}
+              formatter={(v) => <span style={{ color: "#64748B" }}>{v}</span>}
             />
             <Bar
               yAxisId="left"
@@ -896,7 +896,7 @@ export default function Finanzas() {
             <div
               key={label}
               className="flex items-center gap-1.5 text-xs"
-              style={{ color: "#8FA3B8" }}
+              style={{ color: "#64748B" }}
             >
               <span
                 className="w-3 h-3 rounded-sm inline-block"
@@ -934,7 +934,7 @@ export default function Finanzas() {
                       </span>
                       <span
                         className="text-sm font-medium"
-                        style={{ color: "#F0EDE8" }}
+                        style={{ color: "#1E293B" }}
                       >
                         {s.name}
                       </span>
@@ -948,7 +948,7 @@ export default function Finanzas() {
                       </span>
                       <span
                         className="text-xs ml-2"
-                        style={{ color: "#8FA3B8" }}
+                        style={{ color: "#64748B" }}
                       >
                         {fmt$(s.revenue)}
                       </span>
@@ -1047,13 +1047,13 @@ export default function Finanzas() {
                 key={label}
                 className="rounded-xl p-3 transition-all duration-200 hover:scale-[1.02]"
                 style={{
-                  background: "rgba(6,14,26,0.5)",
+                  background: "#F8FAFC",
                   border: "1px solid rgba(201,169,110,0.08)",
                 }}
               >
                 <div className="flex items-center gap-2 mb-1">
                   <span>{icon}</span>
-                  <p className="text-xs" style={{ color: "#8FA3B8" }}>
+                  <p className="text-xs" style={{ color: "#64748B" }}>
                     {label}
                   </p>
                 </div>

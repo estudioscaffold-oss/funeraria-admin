@@ -60,7 +60,7 @@ const STATUS_CFG: Record<
   },
   inactivo: {
     label: "Inactivo",
-    color: "#8FA3B8",
+    color: "#64748B",
     bg: "rgba(107,114,128,0.12)",
     dot: "#6B7280",
   },
@@ -243,7 +243,7 @@ function DocBadge({ label, doc }: { label: string; doc?: VehicleDoc }) {
       <Icon size={10} style={{ color }} />
       <span style={{ color }}>{label}</span>
       {days !== null && (
-        <span style={{ color: "rgba(143,163,184,0.7)" }}>
+        <span style={{ color: "#94A3B8" }}>
           {days < 0 ? `vencido hace ${Math.abs(days)}d` : `${days}d`}
         </span>
       )}
@@ -277,7 +277,7 @@ function DocFields({
         <Icon size={14} style={{ color: "#C9A96E" }} />
         <span
           className="text-sm font-semibold flex-1"
-          style={{ color: "#F0EDE8" }}
+          style={{ color: "#1E293B" }}
         >
           {title}
         </span>
@@ -298,7 +298,7 @@ function DocFields({
         )}
         <ChevronDown
           size={13}
-          style={{ color: "#8FA3B8" }}
+          style={{ color: "#64748B" }}
           className={`transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
@@ -418,7 +418,7 @@ function VehicleCard({
               <div className="flex items-center gap-2 flex-wrap">
                 <h3
                   className="text-base font-bold"
-                  style={{ color: "#F0EDE8" }}
+                  style={{ color: "#1E293B" }}
                 >
                   {vehicle.brand} {vehicle.model}
                 </h3>
@@ -431,7 +431,7 @@ function VehicleCard({
               </div>
               <div
                 className="flex items-center gap-3 mt-1 flex-wrap text-xs"
-                style={{ color: "#8FA3B8" }}
+                style={{ color: "#64748B" }}
               >
                 <span>{vehicle.year}</span>
                 <span>·</span>
@@ -455,7 +455,7 @@ function VehicleCard({
               {vehicle.assignedTo && (
                 <div
                   className="flex items-center gap-1 mt-1 text-xs"
-                  style={{ color: "#8FA3B8" }}
+                  style={{ color: "#64748B" }}
                 >
                   <User size={10} /> {vehicle.assignedTo}
                 </div>
@@ -520,7 +520,7 @@ function VehicleCard({
           <button
             onClick={() => setExpanded((p) => !p)}
             className="flex items-center gap-1 text-xs mt-3 transition-colors"
-            style={{ color: "#8FA3B8" }}
+            style={{ color: "#64748B" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#C9A96E")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "#8FA3B8")}
           >
@@ -585,19 +585,19 @@ function VehicleCard({
                     key={label}
                     className="rounded-xl p-3"
                     style={{
-                      background: "rgba(6,14,26,0.4)",
+                      background: "#F8FAFC",
                       border: "1px solid rgba(201,169,110,0.08)",
                     }}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
                       <Icon size={10} style={{ color: "#C9A96E" }} />
-                      <span className="text-xs" style={{ color: "#8FA3B8" }}>
+                      <span className="text-xs" style={{ color: "#64748B" }}>
                         {label}
                       </span>
                     </div>
                     <p
                       className="text-sm font-semibold"
-                      style={{ color: "#F0EDE8" }}
+                      style={{ color: "#1E293B" }}
                     >
                       {value}
                     </p>
@@ -607,14 +607,14 @@ function VehicleCard({
                 <div
                   className="col-span-2 md:col-span-4 rounded-xl p-3"
                   style={{
-                    background: "rgba(6,14,26,0.4)",
+                    background: "#F8FAFC",
                     border: "1px solid rgba(201,169,110,0.08)",
                   }}
                 >
-                  <p className="text-xs mb-1" style={{ color: "#8FA3B8" }}>
+                  <p className="text-xs mb-1" style={{ color: "#64748B" }}>
                     Observaciones
                   </p>
-                  <p className="text-sm" style={{ color: "#F0EDE8" }}>
+                  <p className="text-sm" style={{ color: "#1E293B" }}>
                     {vehicle.observations}
                   </p>
                 </div>
@@ -731,7 +731,7 @@ export default function Flota() {
   };
 
   return (
-    <div className="p-8 space-y-6" style={{ color: "#F0EDE8" }}>
+    <div className="p-8 space-y-6" style={{ color: "#1E293B" }}>
       {/* ── Header ── */}
       <div className="flex items-start justify-between flex-wrap gap-4 animate-fade-in">
         <div>
@@ -741,10 +741,10 @@ export default function Flota() {
           >
             Gestión de Flota
           </p>
-          <h1 className="text-3xl font-bold" style={{ color: "#F0EDE8" }}>
+          <h1 className="text-3xl font-bold" style={{ color: "#1E293B" }}>
             Vehículos
           </h1>
-          <p className="text-sm mt-1" style={{ color: "#8FA3B8" }}>
+          <p className="text-sm mt-1" style={{ color: "#64748B" }}>
             {stats.total} unidades · {stats.activos} activas ·{" "}
             {stats.mantenimiento} en mantención
             {stats.alertas > 0 && (
@@ -784,7 +784,7 @@ export default function Flota() {
                       background: "linear-gradient(135deg,#D4AF70,#A07840)",
                       color: "#060E1A",
                     }
-                  : { color: "#8FA3B8" }
+                  : { color: "#64748B" }
               }
             >
               {s === "todos" ? "Todos" : STATUS_CFG[s as VehicleStatus].label}
@@ -815,7 +815,7 @@ export default function Flota() {
       {filtered.length === 0 ? (
         <div className="glass-card rounded-2xl p-16 text-center">
           <div className="text-5xl mb-4">🚗</div>
-          <p className="text-base font-medium" style={{ color: "#8FA3B8" }}>
+          <p className="text-base font-medium" style={{ color: "#64748B" }}>
             Sin vehículos
           </p>
           <button
@@ -850,7 +850,7 @@ export default function Flota() {
           <div
             className="w-full max-w-sm rounded-2xl p-6 animate-slide-up"
             style={{
-              background: "#0D1E35",
+              background: "#FFFFFF",
               border: "1px solid rgba(239,68,68,0.3)",
             }}
           >
@@ -861,11 +861,11 @@ export default function Flota() {
               >
                 <Trash2 size={18} style={{ color: "#FCA5A5" }} />
               </div>
-              <h3 className="font-bold" style={{ color: "#F0EDE8" }}>
+              <h3 className="font-bold" style={{ color: "#1E293B" }}>
                 ¿Eliminar vehículo?
               </h3>
             </div>
-            <p className="text-sm mb-6" style={{ color: "#8FA3B8" }}>
+            <p className="text-sm mb-6" style={{ color: "#64748B" }}>
               Se eliminará permanentemente el registro y todos sus documentos.
             </p>
             <div className="flex gap-3">
@@ -902,7 +902,7 @@ export default function Flota() {
           <div
             className="h-full w-full max-w-2xl flex flex-col animate-slide-in overflow-hidden"
             style={{
-              background: "#0A1628",
+              background: "#FFFFFF",
               borderLeft: "1px solid rgba(201,169,110,0.2)",
             }}
           >
@@ -912,10 +912,10 @@ export default function Flota() {
               style={{ borderBottom: "1px solid rgba(201,169,110,0.12)" }}
             >
               <div>
-                <h2 className="text-lg font-bold" style={{ color: "#F0EDE8" }}>
+                <h2 className="text-lg font-bold" style={{ color: "#1E293B" }}>
                   {editId ? "Editar vehículo" : "Agregar vehículo"}
                 </h2>
-                <p className="text-xs mt-0.5" style={{ color: "#8FA3B8" }}>
+                <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>
                   Completa los antecedentes del medio de transporte
                 </p>
               </div>
@@ -924,7 +924,7 @@ export default function Flota() {
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
                 style={{
                   background: "rgba(201,169,110,0.08)",
-                  color: "#8FA3B8",
+                  color: "#64748B",
                 }}
               >
                 <X size={16} />

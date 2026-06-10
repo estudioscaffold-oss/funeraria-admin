@@ -12,7 +12,6 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 
-/* ── stat card ──────────────────────────── */
 function StatCard({
   label,
   value,
@@ -31,36 +30,27 @@ function StatCard({
       <div className="flex items-start justify-between mb-4">
         <div
           className="w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
-          style={{ background: accent, boxShadow: `0 4px 15px ${accent}55` }}
+          style={{ background: `${accent}18` }}
         >
-          <Icon size={20} style={{ color: "#060E1A" }} strokeWidth={2.5} />
+          <Icon size={20} style={{ color: accent }} strokeWidth={2} />
         </div>
         <span
           className="text-xs font-medium px-2 py-1 rounded-full"
-          style={{ background: "rgba(201,169,110,0.1)", color: "#C9A96E" }}
+          style={{ background: "rgba(201,169,110,0.1)", color: "#A07840" }}
         >
           {sub ?? "Total"}
         </span>
       </div>
-      <p
-        className="text-4xl font-bold text-gold-shimmer mb-1"
-        style={{
-          background: "linear-gradient(90deg,#D4AF70,#F2E8CB,#D4AF70)",
-          backgroundSize: "200% auto",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
-      >
+      <p className="text-4xl font-bold mb-1" style={{ color: "#0A1628" }}>
         {value}
       </p>
-      <p className="text-sm" style={{ color: "#8FA3B8" }}>
+      <p className="text-sm" style={{ color: "#64748B" }}>
         {label}
       </p>
     </div>
   );
 }
 
-/* ── section card ───────────────────────── */
 function SectionCard({
   title,
   action,
@@ -76,11 +66,11 @@ function SectionCard({
     <div className="glass-card rounded-2xl overflow-hidden animate-slide-up">
       <div
         className="flex items-center justify-between px-6 py-4"
-        style={{ borderBottom: "1px solid rgba(201,169,110,0.1)" }}
+        style={{ borderBottom: "1px solid #E2E8F0" }}
       >
         <h2
-          className="font-semibold text-sm tracking-wide uppercase"
-          style={{ color: "#C9A96E", letterSpacing: "0.08em" }}
+          className="font-bold text-sm tracking-wide"
+          style={{ color: "#0A1628" }}
         >
           {title}
         </h2>
@@ -88,9 +78,7 @@ function SectionCard({
           <button
             onClick={onAction}
             className="flex items-center gap-1 text-xs font-medium transition-all duration-200 hover:gap-2"
-            style={{ color: "#8FA3B8" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#D4AF70")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#8FA3B8")}
+            style={{ color: "#C9A96E" }}
           >
             {action} <ArrowRight size={11} />
           </button>
@@ -102,13 +90,13 @@ function SectionCard({
 }
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  recepcion: { bg: "rgba(59,130,246,0.12)", color: "#93C5FD" },
-  preparacion: { bg: "rgba(139,92,246,0.12)", color: "#C4B5FD" },
-  en_proceso: { bg: "rgba(201,169,110,0.12)", color: "#D4AF70" },
-  velatorio: { bg: "rgba(249,115,22,0.12)", color: "#FDB877" },
-  traslado: { bg: "rgba(20,184,166,0.12)", color: "#5EEAD4" },
-  completado: { bg: "rgba(16,185,129,0.12)", color: "#6EE7B7" },
-  cancelado: { bg: "rgba(107,114,128,0.12)", color: "#9CA3AF" },
+  recepcion: { bg: "rgba(59,130,246,0.1)", color: "#1D4ED8" },
+  preparacion: { bg: "rgba(139,92,246,0.1)", color: "#6D28D9" },
+  en_proceso: { bg: "rgba(201,169,110,0.12)", color: "#A07840" },
+  velatorio: { bg: "rgba(249,115,22,0.1)", color: "#C2410C" },
+  traslado: { bg: "rgba(20,184,166,0.1)", color: "#0F766E" },
+  completado: { bg: "rgba(16,185,129,0.1)", color: "#047857" },
+  cancelado: { bg: "rgba(107,114,128,0.1)", color: "#374151" },
 };
 
 export default function Dashboard() {
@@ -128,7 +116,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-6">
       {/* Header */}
       <div className="animate-fade-in">
         <p
@@ -137,10 +125,10 @@ export default function Dashboard() {
         >
           {format(new Date(), "EEEE", { locale: es }).toUpperCase()}
         </p>
-        <h1 className="text-3xl font-bold" style={{ color: "#F0EDE8" }}>
+        <h1 className="text-3xl font-bold" style={{ color: "#0A1628" }}>
           {format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}
         </h1>
-        <p className="text-sm mt-1" style={{ color: "#8FA3B8" }}>
+        <p className="text-sm mt-1" style={{ color: "#64748B" }}>
           Bienvenida al cetro de control de tu organización
         </p>
       </div>
@@ -151,26 +139,26 @@ export default function Dashboard() {
           label="Casos Activos"
           value={active.length}
           icon={Users}
-          accent="#C9A96E"
+          accent="#0A1628"
         />
         <StatCard
           label="Servicios Hoy"
           value={todayServices.length}
           icon={CalendarCheck}
-          accent="#6EE7B7"
+          accent="#047857"
           sub="Hoy"
         />
         <StatCard
           label="Cotizaciones Pendientes"
           value={pendingQuotes.length}
           icon={FileText}
-          accent="#93C5FD"
+          accent="#1D4ED8"
         />
         <StatCard
           label="Urgencias"
           value={urgent.length}
           icon={AlertTriangle}
-          accent="#FCA5A5"
+          accent="#B91C1C"
           sub="Alerta"
         />
       </div>
@@ -184,13 +172,12 @@ export default function Dashboard() {
         >
           {active.length === 0 ? (
             <div className="px-6 py-10 text-center">
-              <div
-                className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
-                style={{ background: "rgba(201,169,110,0.08)" }}
-              >
-                <Users size={20} style={{ color: "#C9A96E" }} />
-              </div>
-              <p className="text-sm" style={{ color: "#8FA3B8" }}>
+              <Users
+                size={28}
+                className="mx-auto mb-3"
+                style={{ color: "#CBD5E1" }}
+              />
+              <p className="text-sm" style={{ color: "#94A3B8" }}>
                 Sin casos activos
               </p>
             </div>
@@ -207,23 +194,20 @@ export default function Dashboard() {
                   <div className="flex items-center gap-3">
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                      style={{
-                        background: "linear-gradient(135deg,#D4AF70,#A07840)",
-                        color: "#060E1A",
-                      }}
+                      style={{ background: "#0A1628", color: "#D4AF70" }}
                     >
                       {d.fullName.charAt(0)}
                     </div>
                     <div>
                       <p
-                        className="text-sm font-medium"
-                        style={{ color: "#F0EDE8" }}
+                        className="text-sm font-semibold"
+                        style={{ color: "#1E293B" }}
                       >
                         {d.fullName}
                       </p>
                       <p
                         className="text-xs mt-0.5"
-                        style={{ color: "#8FA3B8" }}
+                        style={{ color: "#64748B" }}
                       >
                         {SERVICE_LABELS[d.serviceType]} ·{" "}
                         {d.assignedStaff || "Sin asignar"}
@@ -232,7 +216,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-center gap-2">
                     {d.urgencies && (
-                      <AlertTriangle size={13} style={{ color: "#FCA5A5" }} />
+                      <AlertTriangle size={13} style={{ color: "#EF4444" }} />
                     )}
                     <span
                       className="text-xs px-2.5 py-1 rounded-full font-medium"
@@ -255,13 +239,12 @@ export default function Dashboard() {
         >
           {todayServices.length === 0 ? (
             <div className="px-6 py-10 text-center">
-              <div
-                className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
-                style={{ background: "rgba(201,169,110,0.08)" }}
-              >
-                <CalendarCheck size={20} style={{ color: "#C9A96E" }} />
-              </div>
-              <p className="text-sm" style={{ color: "#8FA3B8" }}>
+              <CalendarCheck
+                size={28}
+                className="mx-auto mb-3"
+                style={{ color: "#CBD5E1" }}
+              />
+              <p className="text-sm" style={{ color: "#94A3B8" }}>
                 Sin servicios programados hoy
               </p>
             </div>
@@ -283,18 +266,15 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p
-                    className="text-sm font-medium truncate"
-                    style={{ color: "#F0EDE8" }}
+                    className="text-sm font-semibold truncate"
+                    style={{ color: "#1E293B" }}
                   >
                     {s.deceasedName}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: "#8FA3B8" }}>
+                  <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>
                     {SERVICE_LABELS[s.serviceType]}
                   </p>
-                  <p
-                    className="text-xs mt-0.5"
-                    style={{ color: "rgba(143,163,184,0.6)" }}
-                  >
+                  <p className="text-xs mt-0.5" style={{ color: "#94A3B8" }}>
                     {format(new Date(s.startDate), "HH:mm")} · {s.location}
                   </p>
                 </div>
@@ -302,13 +282,10 @@ export default function Dashboard() {
                   className="text-xs px-2.5 py-1 rounded-full font-medium shrink-0"
                   style={
                     s.status === "en_curso"
-                      ? {
-                          background: "rgba(16,185,129,0.12)",
-                          color: "#6EE7B7",
-                        }
+                      ? { background: "rgba(16,185,129,0.1)", color: "#047857" }
                       : {
-                          background: "rgba(201,169,110,0.12)",
-                          color: "#D4AF70",
+                          background: "rgba(201,169,110,0.1)",
+                          color: "#A07840",
                         }
                   }
                 >
@@ -324,14 +301,11 @@ export default function Dashboard() {
       {urgent.length > 0 && (
         <div
           className="rounded-2xl p-6 animate-slide-up"
-          style={{
-            background: "rgba(239,68,68,0.06)",
-            border: "1px solid rgba(239,68,68,0.2)",
-          }}
+          style={{ background: "#FFF7F7", border: "1px solid #FECACA" }}
         >
           <h2
-            className="font-semibold flex items-center gap-2 mb-4 text-sm uppercase tracking-widest"
-            style={{ color: "#FCA5A5" }}
+            className="font-bold flex items-center gap-2 mb-4 text-sm"
+            style={{ color: "#B91C1C" }}
           >
             <AlertTriangle size={16} /> Alertas de Urgencia
           </h2>
@@ -339,17 +313,17 @@ export default function Dashboard() {
             {urgent.map((d) => (
               <div
                 key={d.id}
-                className="rounded-xl px-4 py-3 cursor-pointer transition-all duration-200 hover:scale-[1.01]"
-                style={{
-                  background: "rgba(239,68,68,0.08)",
-                  border: "1px solid rgba(239,68,68,0.15)",
-                }}
+                className="rounded-xl px-4 py-3 cursor-pointer transition-all duration-200 hover:shadow-sm"
+                style={{ background: "#FFFFFF", border: "1px solid #FECACA" }}
                 onClick={() => navigate(`/fallecidos/${d.id}`)}
               >
-                <p className="font-medium text-sm" style={{ color: "#F0EDE8" }}>
+                <p
+                  className="font-semibold text-sm"
+                  style={{ color: "#1E293B" }}
+                >
                   {d.fullName}
                 </p>
-                <p className="text-xs mt-1" style={{ color: "#FCA5A5" }}>
+                <p className="text-xs mt-1" style={{ color: "#EF4444" }}>
                   {d.urgencies}
                 </p>
               </div>

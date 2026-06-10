@@ -933,7 +933,7 @@ export default function Progress() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-4 py-2 font-medium transition-colors ${filter === f ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+                className={`px-4 py-2 font-medium transition-colors ${filter === f ? "bg-navy-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
               >
                 {f === "activos"
                   ? `Activos (${deceased.filter((d) => d.status !== "completado").length})`
