@@ -22,7 +22,10 @@ import {
   ChevronDown,
   Mail,
   ArrowLeft,
+  Download,
 } from "lucide-react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import OrdenServicioPDF from "../components/pdf/OrdenServicioPDF";
 import {
   STATUS_LABELS,
   STATUS_COLORS,
@@ -1505,6 +1508,28 @@ export default function DeceasedDetail() {
             </div>
           </div>
           <div className="flex gap-2">
+            <PDFDownloadLink
+              document={<OrdenServicioPDF record={d} />}
+              fileName={`orden-servicio-${d.fullName.replace(/\s+/g, "-").toLowerCase()}.pdf`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+              style={{
+                background: "linear-gradient(135deg,#D4AF70,#A07840)",
+                color: "#fff",
+                textDecoration: "none",
+              }}
+            >
+              {({ loading }) =>
+                loading ? (
+                  <>
+                    <Download size={14} /> Generando…
+                  </>
+                ) : (
+                  <>
+                    <Download size={14} /> Orden de Servicio PDF
+                  </>
+                )
+              }
+            </PDFDownloadLink>
             <button
               onClick={() => navigate(`/fallecidos/${d.id}/editar`)}
               className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition-colors"
