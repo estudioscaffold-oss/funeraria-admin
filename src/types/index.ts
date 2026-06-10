@@ -39,7 +39,7 @@ export type VehicleType =
 export type VehicleStatus = "activo" | "mantenimiento" | "inactivo" | "baja";
 
 export interface VehicleDoc {
-  number: string; // nº póliza / nº permiso
+  number?: string; // nº póliza / nº permiso
   company?: string; // aseguradora / entidad
   issueDate?: string; // fecha emisión
   expiryDate: string; // fecha vencimiento
