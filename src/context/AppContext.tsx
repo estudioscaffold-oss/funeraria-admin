@@ -31,6 +31,7 @@ import {
   dbUsers,
   dbConvenios,
   dbCatalog,
+  dbCollections,
 } from "../lib/db";
 
 const IS_ONLINE = !!(
@@ -139,7 +140,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return [];
   });
 
-  /* inventory + audit — always localStorage */
+  /* inventory + audit — localStorage + Supabase */
   const [inventory, setInventory] = useState<InventoryItem[]>(() =>
     lsLoad("veladesk-inventory", MOCK_INVENTORY_ITEMS),
   );
@@ -147,7 +148,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     lsLoad("veladesk-inventory-log", []),
   );
 
-  /* sucursales — always localStorage */
+  /* sucursales — localStorage + Supabase */
   const [sucursales, setSucursales] = useState<Sucursal[]>(() =>
     lsLoad("veladesk-sucursales", MOCK_SUCURSALES),
   );
@@ -156,6 +157,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const saveInventory = (next: InventoryItem[]) => {
     setInventory(next);
     lsSave("veladesk-inventory", next);
+    if (IS_ONLINE)
+      dbCollections.set("veladesk-inventory", next).catch(console.error);
   };
   const appendLog = (entry: Omit<InventoryAuditEntry, "id" | "date">) => {
     const full: InventoryAuditEntry = {
@@ -164,8 +167,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       date: new Date().toISOString(),
     };
     setInventoryLog((p) => {
-      const next = [full, ...p].slice(0, 500); // max 500 entradas
+      const next = [full, ...p].slice(0, 500);
       lsSave("veladesk-inventory-log", next);
+      if (IS_ONLINE)
+        dbCollections.set("veladesk-inventory-log", next).catch(console.error);
       return next;
     });
   };
@@ -231,6 +236,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const saveSucursales = (next: Sucursal[]) => {
     setSucursales(next);
     lsSave("veladesk-sucursales", next);
+    if (IS_ONLINE)
+      dbCollections.set("veladesk-sucursales", next).catch(console.error);
   };
   const addSucursal = (s: Sucursal) => saveSucursales([...sucursales, s]);
   const updateSucursal = (id: string, s: Partial<Sucursal>) =>
@@ -244,12 +251,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const loadAllData = async () => {
       try {
-        const [dec, svc, usr, conv, cat] = await Promise.all([
+        const [dec, svc, usr, conv, cat, inv, invLog, suc] = await Promise.all([
           dbDeceased.getAll(),
           dbServices.getAll(),
           dbUsers.getAll(),
           dbConvenios.getAll(),
           dbCatalog.getAll(),
+          dbCollections.get<InventoryItem[]>(
+            "veladesk-inventory",
+            lsLoad("veladesk-inventory", MOCK_INVENTORY_ITEMS),
+          ),
+          dbCollections.get<InventoryAuditEntry[]>(
+            "veladesk-inventory-log",
+            [],
+          ),
+          dbCollections.get<Sucursal[]>(
+            "veladesk-sucursales",
+            lsLoad("veladesk-sucursales", MOCK_SUCURSALES),
+          ),
         ]);
         setDeceased(dec);
         setServices(svc);
@@ -257,8 +276,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setConvenios(conv);
         const finalCatalog = cat.length ? cat : mockCatalog;
         setCatalog(finalCatalog);
-        // respaldar en localStorage para funcionar offline después
         lsSave("veladesk-catalog", finalCatalog);
+        setInventory(inv);
+        lsSave("veladesk-inventory", inv);
+        setInventoryLog(invLog);
+        lsSave("veladesk-inventory-log", invLog);
+        setSucursales(suc);
+        lsSave("veladesk-sucursales", suc);
         setLoading(false);
       } catch (e) {
         console.error("Supabase load error:", e);

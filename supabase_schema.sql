@@ -102,3 +102,13 @@ create policy "public_all" on funeral_services   for all using (true) with check
 create policy "public_all" on staff_users        for all using (true) with check (true);
 create policy "public_all" on convenios          for all using (true) with check (true);
 create policy "public_all" on catalog_categories for all using (true) with check (true);
+
+-- 6. Colecciones genéricas (inventario, sucursales, proveedores, médicos, destinos, planes)
+create table if not exists veladesk_collections (
+  key        text primary key,
+  data       jsonb default '[]'::jsonb,
+  updated_at text
+);
+
+alter table veladesk_collections enable row level security;
+create policy "public_all" on veladesk_collections for all using (true) with check (true);

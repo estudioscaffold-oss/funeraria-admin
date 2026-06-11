@@ -312,6 +312,27 @@ export const dbConvenios = {
   },
 };
 
+/* ─── colecciones genéricas ────────────────────────── */
+export const dbCollections = {
+  get: async <T>(key: string, def: T): Promise<T> => {
+    const { data, error } = await supabase
+      .from("veladesk_collections")
+      .select("data")
+      .eq("key", key)
+      .maybeSingle();
+    if (error || !data) return def;
+    return data.data as T;
+  },
+  set: async <T>(key: string, value: T): Promise<void> => {
+    const { error } = await supabase.from("veladesk_collections").upsert({
+      key,
+      data: value,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) throw error;
+  },
+};
+
 /* ─── catalog ──────────────────────────────────────── */
 export const dbCatalog = {
   getAll: async (): Promise<CatalogCategory[]> => {

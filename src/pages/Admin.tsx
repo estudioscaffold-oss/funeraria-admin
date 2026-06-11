@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useCollection } from "../hooks/useCollection";
 import { useApp } from "../context/AppContext";
 import {
   Plus,
@@ -84,19 +85,6 @@ interface FuneralPlan {
   items: FuneralPlanItem[];
   active: boolean;
   createdAt: string;
-}
-
-/* ── helpers localStorage ───────────────────────── */
-function loadLS<T>(key: string, def: T): T {
-  try {
-    const v = localStorage.getItem(key);
-    return v ? JSON.parse(v) : def;
-  } catch {
-    return def;
-  }
-}
-function saveLS<T>(key: string, v: T) {
-  localStorage.setItem(key, JSON.stringify(v));
 }
 
 /* ── constantes ─────────────────────────────────── */
@@ -1331,13 +1319,7 @@ function PlanesPane() {
     cat.items.map((item) => ({ ...item, catName: cat.name })),
   );
 
-  const [planes, setPlanes] = useState<FuneralPlan[]>(() =>
-    loadLS("veladesk-planes", []),
-  );
-  const save = (next: FuneralPlan[]) => {
-    setPlanes(next);
-    saveLS("veladesk-planes", next);
-  };
+  const [planes, save] = useCollection<FuneralPlan>("veladesk-planes", []);
 
   const [editing, setEditing] = useState<FuneralPlan | "new" | null>(null);
   const [form, setForm] = useState<{
@@ -2569,13 +2551,10 @@ const PROV_CATS = [
 ];
 
 function TabProveedores() {
-  const [proveedores, setProveedores] = useState<Proveedor[]>(() =>
-    loadLS("veladesk-proveedores", []),
+  const [proveedores, save] = useCollection<Proveedor>(
+    "veladesk-proveedores",
+    [],
   );
-  const save = (next: Proveedor[]) => {
-    setProveedores(next);
-    saveLS("veladesk-proveedores", next);
-  };
   const [editing, setEditing] = useState<Proveedor | "new" | null>(null);
   const emptyForm = (): Proveedor => ({
     id: crypto.randomUUID(),
@@ -2918,9 +2897,7 @@ function InventarioFormModal({
   onClose: () => void;
 }) {
   const { catalog, sucursales } = useApp();
-  const [proveedores] = useState<Proveedor[]>(() =>
-    loadLS("veladesk-proveedores", []),
-  );
+  const [proveedores] = useCollection<Proveedor>("veladesk-proveedores", []);
 
   const empty: InventoryItem = {
     id: crypto.randomUUID(),
@@ -3777,13 +3754,7 @@ function TabInventario() {
    BASE DE MÉDICOS
    ════════════════════════════════════════════════════ */
 function TabMedicos() {
-  const [medicos, setMedicos] = useState<Doctor[]>(() =>
-    loadLS("veladesk-medicos", []),
-  );
-  const save = (next: Doctor[]) => {
-    setMedicos(next);
-    saveLS("veladesk-medicos", next);
-  };
+  const [medicos, save] = useCollection<Doctor>("veladesk-medicos", []);
   const [editing, setEditing] = useState<Doctor | "new" | null>(null);
   const emptyForm = (): Doctor => ({
     id: crypto.randomUUID(),
@@ -4079,13 +4050,10 @@ function DestinosPane({
   type: ServiceDestination["type"];
   singularLabel: string;
 }) {
-  const [destinos, setDestinos] = useState<ServiceDestination[]>(() =>
-    loadLS(`veladesk-destinos-${type}`, []),
+  const [destinos, save] = useCollection<ServiceDestination>(
+    `veladesk-destinos-${type}`,
+    [],
   );
-  const save = (next: ServiceDestination[]) => {
-    setDestinos(next);
-    saveLS(`veladesk-destinos-${type}`, next);
-  };
   const [editing, setEditing] = useState<ServiceDestination | "new" | null>(
     null,
   );
