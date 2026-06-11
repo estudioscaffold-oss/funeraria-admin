@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import {
   Plus,
@@ -19,8 +20,97 @@ import {
   Mail,
   Globe,
   MapPin,
+  Truck,
+  Stethoscope,
+  Package,
+  ListChecks,
+  Search,
+  ExternalLink,
 } from "lucide-react";
 import type { AppUser, Convenio, CatalogItem, UserRole } from "../types";
+
+/* ── tipos locales ───────────────────────────────── */
+interface Proveedor {
+  id: string;
+  name: string;
+  rut?: string;
+  category: string;
+  contactName?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  notes?: string;
+  active: boolean;
+}
+
+interface Doctor {
+  id: string;
+  fullName: string;
+  rut?: string;
+  specialty?: string;
+  institution?: string;
+  phone?: string;
+  email?: string;
+  region?: string;
+  city?: string;
+}
+
+interface ServiceDestination {
+  id: string;
+  type: "cementerio" | "velatorio" | "crematorio";
+  name: string;
+  address?: string;
+  region?: string;
+  city?: string;
+  phone?: string;
+  notes?: string;
+}
+
+interface FuneralPlanItem {
+  id: string;
+  text: string;
+}
+interface FuneralPlan {
+  id: string;
+  name: string;
+  description?: string;
+  items: FuneralPlanItem[];
+  active: boolean;
+  createdAt: string;
+}
+
+/* ── helpers localStorage ───────────────────────── */
+function loadLS<T>(key: string, def: T): T {
+  try {
+    const v = localStorage.getItem(key);
+    return v ? JSON.parse(v) : def;
+  } catch {
+    return def;
+  }
+}
+function saveLS<T>(key: string, v: T) {
+  localStorage.setItem(key, JSON.stringify(v));
+}
+
+/* ── constantes ─────────────────────────────────── */
+const REGIONES = [
+  "Arica y Parinacota",
+  "Tarapacá",
+  "Antofagasta",
+  "Atacama",
+  "Coquimbo",
+  "Valparaíso",
+  "Metropolitana de Santiago",
+  "O'Higgins",
+  "Maule",
+  "Ñuble",
+  "Biobío",
+  "La Araucanía",
+  "Los Ríos",
+  "Los Lagos",
+  "Aysén",
+  "Magallanes",
+];
 import {
   USER_ROLE_LABELS,
   USER_ROLE_COLORS,
@@ -36,6 +126,10 @@ const TABS = [
   { id: "convenios", label: "Convenios", icon: Handshake },
   { id: "servicios", label: "Servicios", icon: Tag },
   { id: "categorias", label: "Categorías", icon: Layers },
+  { id: "proveedores", label: "Proveedores", icon: Truck },
+  { id: "inventario", label: "Inventario", icon: Package },
+  { id: "medicos", label: "Base de Médicos", icon: Stethoscope },
+  { id: "destinos", label: "Destinos del Servicio", icon: MapPin },
 ];
 
 const inputCls =
@@ -641,9 +735,38 @@ function TabConvenios() {
 }
 
 /* ════════════════════════════════════════════════════
-   SERVICIOS (ítems del catálogo agrupados por categoría)
+   SERVICIOS — ítems sueltos + planes funerarios
    ════════════════════════════════════════════════════ */
 function TabServicios() {
+  const [subTab, setSubTab] = useState<"items" | "planes">("items");
+
+  return (
+    <div className="space-y-4">
+      {/* sub-tabs */}
+      <div className="flex gap-1 border-b border-slate-200 -mt-1 mb-4">
+        {[
+          { id: "items", label: "Ítems sueltos", icon: Tag },
+          { id: "planes", label: "Planes funerarios", icon: ListChecks },
+        ].map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setSubTab(id as "items" | "planes")}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              subTab === id
+                ? "border-indigo-600 text-indigo-700"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            <Icon size={14} /> {label}
+          </button>
+        ))}
+      </div>
+      {subTab === "items" ? <ItemsSueltos /> : <PlanesPane />}
+    </div>
+  );
+}
+
+function ItemsSueltos() {
   const { catalog, addCatalogItem, updateCatalogItem, deleteCatalogItem } =
     useApp();
   const [openCat, setOpenCat] = useState<string | null>(catalog[0]?.id ?? null);
@@ -680,16 +803,14 @@ function TabServicios() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-slate-500">
-        Servicios agrupados por categoría. Estos ítems aparecen en los menús
+        Ítems sueltos agrupados por categoría. Aparecen en los menús
         desplegables de los presupuestos.
       </p>
-
       {catalog.map((cat) => (
         <div
           key={cat.id}
           className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
         >
-          {/* category header */}
           <button
             className="w-full flex items-center justify-between px-5 py-3.5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-slate-100"
             onClick={() => setOpenCat(openCat === cat.id ? null : cat.id)}
@@ -718,7 +839,6 @@ function TabServicios() {
             </button>
           </button>
 
-          {/* inline add/edit form */}
           {editingItem?.catId === cat.id && (
             <div className="px-5 py-3 bg-slate-50 border-b border-indigo-100 flex items-end gap-3">
               <div className="flex-1">
@@ -759,7 +879,7 @@ function TabServicios() {
                 </button>
                 <button
                   onClick={handleSaveItem}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-white rounded-lg hover:bg-navy-800 font-medium"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
                 >
                   <Check size={13} /> {editingItem.item ? "Guardar" : "Agregar"}
                 </button>
@@ -767,7 +887,6 @@ function TabServicios() {
             </div>
           )}
 
-          {/* items list */}
           {openCat === cat.id && (
             <div className="divide-y divide-slate-50">
               {cat.items.length === 0 && (
@@ -780,9 +899,7 @@ function TabServicios() {
                   key={item.id}
                   className="flex items-center justify-between px-5 py-2.5 hover:bg-slate-50/70 transition-colors group"
                 >
-                  <div>
-                    <p className="text-sm text-slate-700">{item.name}</p>
-                  </div>
+                  <p className="text-sm text-slate-700">{item.name}</p>
                   <div className="flex items-center gap-4">
                     <span className="font-semibold text-slate-700 text-sm tabular-nums">
                       {new Intl.NumberFormat("es-CL", {
@@ -793,7 +910,7 @@ function TabServicios() {
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => openEditItem(cat.id, item)}
-                        className="p-1.5 text-slate-400 hover:text-navy-900 hover:bg-slate-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-navy-900 hover:bg-slate-50 rounded-lg"
                       >
                         <Edit size={13} />
                       </button>
@@ -802,12 +919,348 @@ function TabServicios() {
                           if (confirm(`¿Eliminar "${item.name}"?`))
                             deleteCatalogItem(cat.id, item.id);
                         }}
-                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 size={13} />
                       </button>
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PlanesPane() {
+  const [planes, setPlanes] = useState<FuneralPlan[]>(() =>
+    loadLS("veladesk-planes", []),
+  );
+  const save = (next: FuneralPlan[]) => {
+    setPlanes(next);
+    saveLS("veladesk-planes", next);
+  };
+
+  const [editing, setEditing] = useState<FuneralPlan | "new" | null>(null);
+  const [form, setForm] = useState<{
+    name: string;
+    description: string;
+    active: boolean;
+  }>({ name: "", description: "", active: true });
+  const [items, setItems] = useState<FuneralPlanItem[]>([]);
+  const [newItem, setNewItem] = useState("");
+  const [editItemIdx, setEditItemIdx] = useState<number | null>(null);
+  const [editItemVal, setEditItemVal] = useState("");
+  const [openPlanId, setOpenPlanId] = useState<string | null>(null);
+
+  const openNew = () => {
+    setForm({ name: "", description: "", active: true });
+    setItems([]);
+    setNewItem("");
+    setEditing("new");
+  };
+  const openEdit = (p: FuneralPlan) => {
+    setForm({
+      name: p.name,
+      description: p.description ?? "",
+      active: p.active,
+    });
+    setItems([...p.items]);
+    setNewItem("");
+    setEditing(p);
+  };
+  const handleSave = () => {
+    if (!form.name.trim()) return;
+    if (editing === "new") {
+      const np: FuneralPlan = {
+        id: crypto.randomUUID(),
+        ...form,
+        items,
+        createdAt: new Date().toISOString(),
+      };
+      save([...planes, np]);
+    } else {
+      save(
+        planes.map((p) =>
+          p.id === (editing as FuneralPlan).id ? { ...p, ...form, items } : p,
+        ),
+      );
+    }
+    setEditing(null);
+  };
+
+  const addPlanItem = () => {
+    const v = newItem.trim();
+    if (!v) return;
+    setItems((p) => [...p, { id: crypto.randomUUID(), text: v }]);
+    setNewItem("");
+  };
+  const confirmEditItem = () => {
+    if (editItemIdx === null) return;
+    setItems((p) =>
+      p.map((x, i) => (i === editItemIdx ? { ...x, text: editItemVal } : x)),
+    );
+    setEditItemIdx(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-slate-500">
+          {planes.length} planes personalizados
+        </p>
+        <button
+          onClick={openNew}
+          className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 hover:bg-navy-800 transition-colors shadow-sm"
+        >
+          <Plus size={15} /> Nuevo Plan
+        </button>
+      </div>
+
+      {/* form */}
+      {editing !== null && (
+        <div className="bg-white rounded-xl border border-gold-200 shadow-md p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-slate-800 text-sm">
+              {editing === "new"
+                ? "Nuevo Plan Funerario"
+                : `Editando: ${(editing as FuneralPlan).name}`}
+            </h3>
+            <button
+              onClick={() => setEditing(null)}
+              className="p-1.5 hover:bg-slate-100 rounded-lg"
+            >
+              <X size={16} className="text-slate-400" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Nombre del plan *
+              </label>
+              <input
+                className={inputCls}
+                value={form.name}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, name: e.target.value }))
+                }
+                placeholder="Ej: Plan Serenidad, Plan Premium…"
+                autoFocus
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Descripción
+              </label>
+              <textarea
+                rows={2}
+                className={inputCls + " resize-none"}
+                value={form.description}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, description: e.target.value }))
+                }
+                placeholder="Descripción del plan…"
+              />
+            </div>
+          </div>
+
+          {/* items del plan */}
+          <div>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">
+              Ítems incluidos en el plan
+            </label>
+            {items.length > 0 && (
+              <ul className="space-y-1.5 mb-3">
+                {items.map((item, idx) => (
+                  <li
+                    key={item.id}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50"
+                  >
+                    {editItemIdx === idx ? (
+                      <>
+                        <input
+                          className={`${inputCls} flex-1 py-1`}
+                          value={editItemVal}
+                          onChange={(e) => setEditItemVal(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") confirmEditItem();
+                            if (e.key === "Escape") setEditItemIdx(null);
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          onClick={confirmEditItem}
+                          className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                        >
+                          <Check size={13} />
+                        </button>
+                        <button
+                          onClick={() => setEditItemIdx(null)}
+                          className="p-1 text-slate-400 hover:bg-slate-100 rounded"
+                        >
+                          <X size={13} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 text-sm text-slate-700">
+                          {item.text}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setEditItemIdx(idx);
+                            setEditItemVal(item.text);
+                          }}
+                          className="p-1 text-slate-400 hover:text-amber-600 rounded"
+                        >
+                          <Edit size={13} />
+                        </button>
+                        <button
+                          onClick={() =>
+                            setItems((p) => p.filter((_, i) => i !== idx))
+                          }
+                          className="p-1 text-slate-400 hover:text-red-500 rounded"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-2">
+              <input
+                className={`${inputCls} flex-1`}
+                value={newItem}
+                onChange={(e) => setNewItem(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addPlanItem();
+                  }
+                }}
+                placeholder="Agregar ítem al plan…"
+              />
+              <button
+                onClick={addPlanItem}
+                disabled={!newItem.trim()}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+              >
+                <Plus size={13} /> Agregar
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="plan-active"
+              checked={form.active}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, active: e.target.checked }))
+              }
+              className="w-4 h-4 accent-indigo-600"
+            />
+            <label htmlFor="plan-active" className="text-sm text-slate-600">
+              Plan activo
+            </label>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              onClick={() => setEditing(null)}
+              className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
+            >
+              <Check size={14} /> Guardar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* lista planes */}
+      {planes.length === 0 && editing === null && (
+        <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-slate-400 text-sm">
+          Sin planes creados aún
+        </div>
+      )}
+      {planes.map((plan) => (
+        <div
+          key={plan.id}
+          className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+        >
+          <button
+            className="w-full flex items-center justify-between px-5 py-3.5 bg-slate-50 hover:bg-slate-100 transition-colors"
+            onClick={() =>
+              setOpenPlanId(openPlanId === plan.id ? null : plan.id)
+            }
+          >
+            <div className="flex items-center gap-3">
+              {openPlanId === plan.id ? (
+                <ChevronDown size={15} className="text-indigo-500" />
+              ) : (
+                <ChevronRight size={15} className="text-slate-400" />
+              )}
+              <div className="text-left">
+                <p className="font-semibold text-slate-700 text-sm">
+                  {plan.name}
+                </p>
+                {plan.description && (
+                  <p className="text-xs text-slate-400">{plan.description}</p>
+                )}
+              </div>
+              <span className="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">
+                {plan.items.length} ítems
+              </span>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-medium ${plan.active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}
+              >
+                {plan.active ? "Activo" : "Inactivo"}
+              </span>
+            </div>
+            <div
+              className="flex items-center gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => openEdit(plan)}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gold-200 text-navy-900 hover:bg-navy-900 hover:text-white transition-all"
+              >
+                <Edit size={12} /> Editar
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm(`¿Eliminar el plan "${plan.name}"?`))
+                    save(planes.filter((p) => p.id !== plan.id));
+                }}
+                className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          </button>
+          {openPlanId === plan.id && (
+            <div className="divide-y divide-slate-50">
+              {plan.items.length === 0 && (
+                <p className="px-5 py-4 text-sm text-slate-400 text-center">
+                  Sin ítems
+                </p>
+              )}
+              {plan.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 px-5 py-2.5"
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                  <p className="text-sm text-slate-700">{item.text}</p>
                 </div>
               ))}
             </div>
@@ -1373,6 +1826,983 @@ function TabPerfil() {
 }
 
 /* ════════════════════════════════════════════════════
+   PROVEEDORES
+   ════════════════════════════════════════════════════ */
+const PROV_CATS = [
+  "Ataúdes y urnas",
+  "Flores y coronas",
+  "Servicios religiosos",
+  "Traslados",
+  "Imprenta",
+  "Equipamiento",
+  "Limpieza",
+  "Otro",
+];
+
+function TabProveedores() {
+  const [proveedores, setProveedores] = useState<Proveedor[]>(() =>
+    loadLS("veladesk-proveedores", []),
+  );
+  const save = (next: Proveedor[]) => {
+    setProveedores(next);
+    saveLS("veladesk-proveedores", next);
+  };
+  const [editing, setEditing] = useState<Proveedor | "new" | null>(null);
+  const emptyForm = (): Proveedor => ({
+    id: crypto.randomUUID(),
+    name: "",
+    rut: "",
+    category: PROV_CATS[0],
+    contactName: "",
+    phone: "",
+    email: "",
+    address: "",
+    notes: "",
+    active: true,
+  });
+  const [form, setForm] = useState<Proveedor>(emptyForm());
+  const [search, setSearch] = useState("");
+
+  const filtered = proveedores.filter(
+    (p) =>
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.category.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const handleSave = () => {
+    if (!form.name.trim()) return;
+    if (editing === "new") save([...proveedores, form]);
+    else save(proveedores.map((p) => (p.id === form.id ? form : p)));
+    setEditing(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            className={inputCls + " pl-8"}
+            placeholder="Buscar proveedor…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={() => {
+            setForm(emptyForm());
+            setEditing("new");
+          }}
+          className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 hover:bg-navy-800 transition-colors shadow-sm"
+        >
+          <Plus size={15} /> Nuevo Proveedor
+        </button>
+      </div>
+
+      {editing !== null && (
+        <div className="bg-white rounded-xl border border-gold-200 shadow-md p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-slate-800 text-sm">
+              {editing === "new"
+                ? "Nuevo Proveedor"
+                : `Editando: ${(editing as Proveedor).name}`}
+            </h3>
+            <button
+              onClick={() => setEditing(null)}
+              className="p-1.5 hover:bg-slate-100 rounded-lg"
+            >
+              <X size={16} className="text-slate-400" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Nombre *
+              </label>
+              <input
+                className={inputCls}
+                value={form.name}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, name: e.target.value }))
+                }
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                RUT
+              </label>
+              <input
+                className={inputCls}
+                value={form.rut ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, rut: e.target.value }))
+                }
+                placeholder="76.123.456-7"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Categoría
+              </label>
+              <select
+                className={inputCls}
+                value={form.category}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, category: e.target.value }))
+                }
+              >
+                {PROV_CATS.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Contacto
+              </label>
+              <input
+                className={inputCls}
+                value={form.contactName ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, contactName: e.target.value }))
+                }
+                placeholder="Nombre del contacto"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Teléfono
+              </label>
+              <input
+                className={inputCls}
+                value={form.phone ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, phone: e.target.value }))
+                }
+                placeholder="+56 9 …"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Correo
+              </label>
+              <input
+                type="email"
+                className={inputCls}
+                value={form.email ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, email: e.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Dirección
+              </label>
+              <input
+                className={inputCls}
+                value={form.address ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, address: e.target.value }))
+                }
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Notas
+              </label>
+              <textarea
+                rows={2}
+                className={inputCls + " resize-none"}
+                value={form.notes ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, notes: e.target.value }))
+                }
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="prov-active"
+                checked={form.active}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, active: e.target.checked }))
+                }
+                className="w-4 h-4 accent-indigo-600"
+              />
+              <label htmlFor="prov-active" className="text-sm text-slate-600">
+                Proveedor activo
+              </label>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              onClick={() => setEditing(null)}
+              className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
+            >
+              <Check size={14} /> Guardar
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 border-b border-slate-200">
+            <tr>
+              {[
+                "Nombre",
+                "Categoría",
+                "Contacto",
+                "Teléfono",
+                "Estado",
+                "Acciones",
+              ].map((h) => (
+                <th
+                  key={h}
+                  className="text-left px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {filtered.length === 0 && (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="px-4 py-10 text-center text-slate-400"
+                >
+                  Sin proveedores registrados
+                </td>
+              </tr>
+            )}
+            {filtered.map((p) => (
+              <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-slate-800">{p.name}</p>
+                  {p.rut && <p className="text-xs text-slate-400">{p.rut}</p>}
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+                    {p.category}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-slate-600 text-sm">
+                  {p.contactName || "—"}
+                </td>
+                <td className="px-4 py-3 text-slate-500 text-sm">
+                  {p.phone || "—"}
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full font-medium ${p.active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}
+                  >
+                    {p.active ? "Activo" : "Inactivo"}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setForm({ ...p });
+                        setEditing(p);
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gold-200 text-navy-900 hover:bg-navy-900 hover:text-white transition-all"
+                    >
+                      <Edit size={12} /> Editar
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`¿Eliminar "${p.name}"?`))
+                          save(proveedores.filter((x) => x.id !== p.id));
+                      }}
+                      className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
+   INVENTARIO — enlace al módulo
+   ════════════════════════════════════════════════════ */
+function TabInventario() {
+  const navigate = useNavigate();
+  return (
+    <div className="max-w-xl mx-auto mt-10 text-center space-y-4">
+      <div
+        className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+        style={{ background: "rgba(201,169,110,0.12)" }}
+      >
+        <Package size={28} style={{ color: "#A07840" }} />
+      </div>
+      <h2 className="text-xl font-bold text-slate-800">
+        Gestión de Inventario
+      </h2>
+      <p className="text-slate-500 text-sm">
+        El inventario tiene su propio módulo con CRUD completo, control de stock
+        mínimo, categorías, ubicación y valor unitario por ítem.
+      </p>
+      <button
+        onClick={() => navigate("/inventario")}
+        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm btn-gold"
+      >
+        <span className="relative z-10 flex items-center gap-2">
+          <ExternalLink size={15} /> Ir al módulo de Inventario
+        </span>
+      </button>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
+   BASE DE MÉDICOS
+   ════════════════════════════════════════════════════ */
+function TabMedicos() {
+  const [medicos, setMedicos] = useState<Doctor[]>(() =>
+    loadLS("veladesk-medicos", []),
+  );
+  const save = (next: Doctor[]) => {
+    setMedicos(next);
+    saveLS("veladesk-medicos", next);
+  };
+  const [editing, setEditing] = useState<Doctor | "new" | null>(null);
+  const emptyForm = (): Doctor => ({
+    id: crypto.randomUUID(),
+    fullName: "",
+    rut: "",
+    specialty: "",
+    institution: "",
+    phone: "",
+    email: "",
+    region: "",
+    city: "",
+  });
+  const [form, setForm] = useState<Doctor>(emptyForm());
+  const [search, setSearch] = useState("");
+
+  const filtered = medicos.filter(
+    (m) =>
+      m.fullName.toLowerCase().includes(search.toLowerCase()) ||
+      (m.specialty ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (m.institution ?? "").toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const handleSave = () => {
+    if (!form.fullName.trim()) return;
+    if (editing === "new") save([...medicos, form]);
+    else save(medicos.map((m) => (m.id === form.id ? form : m)));
+    setEditing(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            className={inputCls + " pl-8"}
+            placeholder="Buscar médico, especialidad…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={() => {
+            setForm(emptyForm());
+            setEditing("new");
+          }}
+          className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 hover:bg-navy-800 transition-colors shadow-sm"
+        >
+          <Plus size={15} /> Nuevo Médico
+        </button>
+      </div>
+
+      {editing !== null && (
+        <div className="bg-white rounded-xl border border-gold-200 shadow-md p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-slate-800 text-sm">
+              {editing === "new"
+                ? "Nuevo Médico"
+                : `Editando: ${(editing as Doctor).fullName}`}
+            </h3>
+            <button
+              onClick={() => setEditing(null)}
+              className="p-1.5 hover:bg-slate-100 rounded-lg"
+            >
+              <X size={16} className="text-slate-400" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Nombre completo *
+              </label>
+              <input
+                className={inputCls}
+                value={form.fullName}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, fullName: e.target.value }))
+                }
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                RUT
+              </label>
+              <input
+                className={inputCls}
+                value={form.rut ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, rut: e.target.value }))
+                }
+                placeholder="12.345.678-9"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Especialidad
+              </label>
+              <input
+                className={inputCls}
+                value={form.specialty ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, specialty: e.target.value }))
+                }
+                placeholder="Ej: Medicina legal, Urgencias…"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Hospital / Clínica / Institución
+              </label>
+              <input
+                className={inputCls}
+                value={form.institution ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, institution: e.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Teléfono
+              </label>
+              <input
+                className={inputCls}
+                value={form.phone ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, phone: e.target.value }))
+                }
+                placeholder="+56 9 …"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Correo
+              </label>
+              <input
+                type="email"
+                className={inputCls}
+                value={form.email ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, email: e.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Región
+              </label>
+              <select
+                className={inputCls}
+                value={form.region ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, region: e.target.value }))
+                }
+              >
+                <option value="">Seleccionar región</option>
+                {REGIONES.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Ciudad / Comuna
+              </label>
+              <input
+                className={inputCls}
+                value={form.city ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, city: e.target.value }))
+                }
+                placeholder="Ej: Santiago, Providencia…"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              onClick={() => setEditing(null)}
+              className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
+            >
+              <Check size={14} /> Guardar
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 border-b border-slate-200">
+            <tr>
+              {[
+                "Nombre",
+                "Especialidad",
+                "Institución",
+                "Región / Ciudad",
+                "Contacto",
+                "Acciones",
+              ].map((h) => (
+                <th
+                  key={h}
+                  className="text-left px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {filtered.length === 0 && (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="px-4 py-10 text-center text-slate-400"
+                >
+                  Sin médicos registrados
+                </td>
+              </tr>
+            )}
+            {filtered.map((m) => (
+              <tr key={m.id} className="hover:bg-slate-50/70 transition-colors">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-slate-800">{m.fullName}</p>
+                  {m.rut && <p className="text-xs text-slate-400">{m.rut}</p>}
+                </td>
+                <td className="px-4 py-3 text-slate-600 text-sm">
+                  {m.specialty || "—"}
+                </td>
+                <td className="px-4 py-3 text-slate-600 text-sm">
+                  {m.institution || "—"}
+                </td>
+                <td className="px-4 py-3 text-slate-500 text-xs">
+                  {[m.region, m.city].filter(Boolean).join(" · ") || "—"}
+                </td>
+                <td className="px-4 py-3 text-slate-500 text-xs space-y-0.5">
+                  {m.phone && <p>{m.phone}</p>}
+                  {m.email && <p className="text-blue-500">{m.email}</p>}
+                  {!m.phone && !m.email && "—"}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setForm({ ...m });
+                        setEditing(m);
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gold-200 text-navy-900 hover:bg-navy-900 hover:text-white transition-all"
+                    >
+                      <Edit size={12} /> Editar
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`¿Eliminar al Dr. "${m.fullName}"?`))
+                          save(medicos.filter((x) => x.id !== m.id));
+                      }}
+                      className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
+   DESTINOS DEL SERVICIO
+   ════════════════════════════════════════════════════ */
+const DEST_SUBTABS = [
+  { id: "cementerio", label: "Cementerios" },
+  { id: "velatorio", label: "Velatorios" },
+  { id: "crematorio", label: "Crematorios" },
+] as const;
+
+function DestinosPane({
+  type,
+  singularLabel,
+}: {
+  type: ServiceDestination["type"];
+  singularLabel: string;
+}) {
+  const [destinos, setDestinos] = useState<ServiceDestination[]>(() =>
+    loadLS(`veladesk-destinos-${type}`, []),
+  );
+  const save = (next: ServiceDestination[]) => {
+    setDestinos(next);
+    saveLS(`veladesk-destinos-${type}`, next);
+  };
+  const [editing, setEditing] = useState<ServiceDestination | "new" | null>(
+    null,
+  );
+  const emptyForm = (): ServiceDestination => ({
+    id: crypto.randomUUID(),
+    type,
+    name: "",
+    address: "",
+    region: "",
+    city: "",
+    phone: "",
+    notes: "",
+  });
+  const [form, setForm] = useState<ServiceDestination>(emptyForm());
+  const [filterRegion, setFilterRegion] = useState("");
+  const [filterCity, setFilterCity] = useState("");
+  const [search, setSearch] = useState("");
+
+  const filtered = destinos.filter((d) => {
+    const matchRegion = !filterRegion || d.region === filterRegion;
+    const matchCity =
+      !filterCity ||
+      (d.city ?? "").toLowerCase().includes(filterCity.toLowerCase());
+    const matchSearch =
+      !search || d.name.toLowerCase().includes(search.toLowerCase());
+    return matchRegion && matchCity && matchSearch;
+  });
+
+  const handleSave = () => {
+    if (!form.name.trim()) return;
+    if (editing === "new") save([...destinos, form]);
+    else save(destinos.map((d) => (d.id === form.id ? form : d)));
+    setEditing(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* toolbar */}
+      <div className="flex flex-wrap items-center gap-2 justify-between">
+        <div className="flex gap-2 flex-wrap">
+          <div className="relative">
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              className={inputCls + " pl-8 w-44"}
+              placeholder={`Buscar ${singularLabel.toLowerCase()}…`}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <select
+            className={inputCls + " w-52"}
+            value={filterRegion}
+            onChange={(e) => setFilterRegion(e.target.value)}
+          >
+            <option value="">Todas las regiones</option>
+            {REGIONES.map((r) => (
+              <option key={r}>{r}</option>
+            ))}
+          </select>
+          <input
+            className={inputCls + " w-40"}
+            placeholder="Ciudad / Comuna…"
+            value={filterCity}
+            onChange={(e) => setFilterCity(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={() => {
+            setForm(emptyForm());
+            setEditing("new");
+          }}
+          className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 hover:bg-navy-800 transition-colors shadow-sm"
+        >
+          <Plus size={15} /> Nuevo {singularLabel}
+        </button>
+      </div>
+
+      {/* form */}
+      {editing !== null && (
+        <div className="bg-white rounded-xl border border-gold-200 shadow-md p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-slate-800 text-sm">
+              {editing === "new"
+                ? `Nuevo ${singularLabel}`
+                : `Editando: ${(editing as ServiceDestination).name}`}
+            </h3>
+            <button
+              onClick={() => setEditing(null)}
+              className="p-1.5 hover:bg-slate-100 rounded-lg"
+            >
+              <X size={16} className="text-slate-400" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Nombre *
+              </label>
+              <input
+                className={inputCls}
+                value={form.name}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, name: e.target.value }))
+                }
+                autoFocus
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Dirección
+              </label>
+              <input
+                className={inputCls}
+                value={form.address ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, address: e.target.value }))
+                }
+                placeholder="Calle, número, comuna"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Región
+              </label>
+              <select
+                className={inputCls}
+                value={form.region ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, region: e.target.value }))
+                }
+              >
+                <option value="">Seleccionar región</option>
+                {REGIONES.map((r) => (
+                  <option key={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Ciudad / Comuna
+              </label>
+              <input
+                className={inputCls}
+                value={form.city ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, city: e.target.value }))
+                }
+                placeholder="Ej: Santiago, Viña del Mar…"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Teléfono
+              </label>
+              <input
+                className={inputCls}
+                value={form.phone ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, phone: e.target.value }))
+                }
+                placeholder="+56 2 …"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Notas
+              </label>
+              <input
+                className={inputCls}
+                value={form.notes ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, notes: e.target.value }))
+                }
+                placeholder="Información adicional…"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              onClick={() => setEditing(null)}
+              className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
+            >
+              <Check size={14} /> Guardar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 border-b border-slate-200">
+            <tr>
+              {[
+                "Nombre",
+                "Dirección",
+                "Región",
+                "Ciudad / Comuna",
+                "Teléfono",
+                "Acciones",
+              ].map((h) => (
+                <th
+                  key={h}
+                  className="text-left px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {filtered.length === 0 && (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="px-4 py-10 text-center text-slate-400"
+                >
+                  {destinos.length === 0
+                    ? `Sin ${singularLabel.toLowerCase()}s registrados`
+                    : "Sin resultados para los filtros aplicados"}
+                </td>
+              </tr>
+            )}
+            {filtered.map((d) => (
+              <tr key={d.id} className="hover:bg-slate-50/70 transition-colors">
+                <td className="px-4 py-3 font-medium text-slate-800">
+                  {d.name}
+                </td>
+                <td className="px-4 py-3 text-slate-500 text-sm max-w-[200px] truncate">
+                  {d.address || "—"}
+                </td>
+                <td className="px-4 py-3 text-slate-500 text-sm">
+                  {d.region || "—"}
+                </td>
+                <td className="px-4 py-3 text-slate-500 text-sm">
+                  {d.city || "—"}
+                </td>
+                <td className="px-4 py-3 text-slate-500 text-sm">
+                  {d.phone || "—"}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setForm({ ...d });
+                        setEditing(d);
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gold-200 text-navy-900 hover:bg-navy-900 hover:text-white transition-all"
+                    >
+                      <Edit size={12} /> Editar
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`¿Eliminar "${d.name}"?`))
+                          save(destinos.filter((x) => x.id !== d.id));
+                      }}
+                      className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function TabDestinos() {
+  const [subTab, setSubTab] = useState<
+    "cementerio" | "velatorio" | "crematorio"
+  >("cementerio");
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-1 border-b border-slate-200 -mt-1 mb-4">
+        {DEST_SUBTABS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setSubTab(id)}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              subTab === id
+                ? "border-indigo-600 text-indigo-700"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            <MapPin size={13} /> {label}
+          </button>
+        ))}
+      </div>
+      {subTab === "cementerio" && (
+        <DestinosPane type="cementerio" singularLabel="Cementerio" />
+      )}
+      {subTab === "velatorio" && (
+        <DestinosPane type="velatorio" singularLabel="Velatorio" />
+      )}
+      {subTab === "crematorio" && (
+        <DestinosPane type="crematorio" singularLabel="Crematorio" />
+      )}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════
    MAIN
    ════════════════════════════════════════════════════ */
 export default function Admin() {
@@ -1388,12 +2818,12 @@ export default function Admin() {
             Gestión de usuarios, convenios y catálogo de servicios
           </p>
         </div>
-        <div className="flex gap-1 -mb-px">
+        <div className="flex gap-1 -mb-px overflow-x-auto">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === id
                   ? "border-indigo-600 text-indigo-700"
                   : "border-transparent text-slate-500 hover:text-slate-700"
@@ -1413,6 +2843,10 @@ export default function Admin() {
         {activeTab === "convenios" && <TabConvenios />}
         {activeTab === "servicios" && <TabServicios />}
         {activeTab === "categorias" && <TabCategorias />}
+        {activeTab === "proveedores" && <TabProveedores />}
+        {activeTab === "inventario" && <TabInventario />}
+        {activeTab === "medicos" && <TabMedicos />}
+        {activeTab === "destinos" && <TabDestinos />}
       </div>
     </div>
   );
