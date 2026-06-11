@@ -554,9 +554,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         .catch((e) => console.error("update user:", e));
   };
   const deleteUser = (id: string) => {
+    const user = users.find((u) => u.id === id);
     setUsers((p) => p.filter((u) => u.id !== id));
-    if (IS_ONLINE)
+    if (IS_ONLINE) {
       dbUsers.delete(id).catch((e) => console.error("delete user:", e));
+      if (user?.email)
+        dbUsers
+          .deleteAuth(user.email)
+          .catch((e) => console.error("delete auth user:", e));
+    }
   };
 
   /* ── convenios ── */

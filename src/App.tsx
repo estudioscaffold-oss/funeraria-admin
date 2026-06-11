@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { supabase } from "./lib/supabase";
 import { loadTheme } from "./lib/theme";
 
 loadTheme();
@@ -136,22 +137,9 @@ function AppRoutes() {
     return <FamiliaPortal />;
   }
 
-  // Sesión pero sin perfil en staff_users → primer uso o email no confirmado
+  // Sesión pero sin perfil en staff_users → usuario borrado o sin perfil aún
   if (!authUser) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#0A1628" }}
-      >
-        <div className="text-center space-y-3">
-          <p className="text-white font-semibold">Acceso pendiente</p>
-          <p className="text-white/50 text-sm max-w-xs">
-            Tu cuenta aún no tiene un perfil asignado. Contacta al usuario
-            Maestro para que complete tu registro.
-          </p>
-        </div>
-      </div>
-    );
+    return <NoPerfil onLogout={() => supabase.auth.signOut()} />;
   }
 
   return (
@@ -172,6 +160,59 @@ function AppRoutes() {
         </Route>
       </Routes>
     </BrowserRouter>
+  );
+}
+
+/* ── Sin perfil / cuenta eliminada ──────────────── */
+function NoPerfil({ onLogout }: { onLogout: () => void }) {
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center p-6"
+      style={{
+        background:
+          "linear-gradient(160deg,#060E1A 0%,#0A1628 55%,#0D1E35 100%)",
+      }}
+    >
+      <div className="text-center max-w-xs space-y-4">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto"
+          style={{ background: "rgba(201,169,110,0.1)" }}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="w-8 h-8"
+            fill="none"
+            stroke="#C9A96E"
+            strokeWidth={1.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+            />
+          </svg>
+        </div>
+        <div>
+          <p className="text-white font-semibold text-lg">
+            Acceso no autorizado
+          </p>
+          <p className="text-white/40 text-sm mt-2">
+            Esta cuenta no tiene un perfil activo en el sistema. Puede que haya
+            sido eliminada o que no haya sido configurada aún.
+          </p>
+        </div>
+        <button
+          onClick={onLogout}
+          className="w-full py-3 rounded-xl text-sm font-semibold transition-all"
+          style={{
+            background: "linear-gradient(135deg,#B8860B,#D4AF70,#B8860B)",
+            color: "#0A1628",
+          }}
+        >
+          Cerrar sesión e intentar con otra cuenta
+        </button>
+      </div>
+    </div>
   );
 }
 

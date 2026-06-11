@@ -116,3 +116,14 @@ create table if not exists veladesk_collections (
 
 alter table veladesk_collections enable row level security;
 create policy "public_all" on veladesk_collections for all using (true) with check (true);
+
+-- Función para eliminar usuario de auth.users (ejecuta con privilegios de propietario)
+create or replace function delete_auth_user_by_email(user_email text)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  delete from auth.users where email = user_email;
+end;
+$$;

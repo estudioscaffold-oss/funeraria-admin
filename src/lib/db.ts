@@ -266,6 +266,12 @@ export const dbUsers = {
     const { error } = await supabase.from("staff_users").delete().eq("id", id);
     if (error) throw error;
   },
+
+  // Elimina también la cuenta de Supabase Auth via función SQL
+  deleteAuth: async (email: string): Promise<void> => {
+    await supabase.rpc("delete_auth_user_by_email", { user_email: email });
+    // No lanzamos error si falla (la cuenta puede no existir en Auth)
+  },
 };
 
 /* ─── convenios ────────────────────────────────────── */
