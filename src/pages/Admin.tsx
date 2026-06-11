@@ -2918,6 +2918,8 @@ const INV_UNITS = [
   "frasco",
 ];
 
+const IVA_RATE = 0.19;
+
 function InventarioFormModal({
   initial,
   onSave,
@@ -2927,10 +2929,17 @@ function InventarioFormModal({
   onSave: (item: InventoryItem) => void;
   onClose: () => void;
 }) {
+  const { catalog, sucursales } = useApp();
+  const [proveedores] = useState<Proveedor[]>(() =>
+    loadLS("veladesk-proveedores", []),
+  );
+
   const empty: InventoryItem = {
     id: crypto.randomUUID(),
     name: "",
-    category: "ataudes_urnas",
+    category: catalog[0]?.id ?? "",
+    catalogCategoryId: catalog[0]?.id ?? "",
+    catalogServiceId: "",
     sku: "",
     quantity: 1,
     unit: "unidad",
@@ -2942,9 +2951,44 @@ function InventarioFormModal({
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
+
   const [form, setForm] = useState<InventoryItem>(initial ?? empty);
   const set = <K extends keyof InventoryItem>(k: K, v: InventoryItem[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
+
+  // servicios filtrados por categoría seleccionada
+  const selectedCat = catalog.find((c) => c.id === form.catalogCategoryId);
+  const serviciosEnCat = selectedCat?.items ?? [];
+
+  // cálculo IVA
+  const precioConIVA = form.unitPrice;
+  const ivaAmount = Math.round((precioConIVA * IVA_RATE) / (1 + IVA_RATE));
+  const precioNeto = precioConIVA - ivaAmount;
+
+  const handleCategoryChange = (catId: string) => {
+    const cat = catalog.find((c) => c.id === catId);
+    setForm((p) => ({
+      ...p,
+      category: catId,
+      catalogCategoryId: catId,
+      catalogServiceId: "",
+      name: p.name, // no borrar nombre manual
+    }));
+    void cat; // referencia para futuro uso
+  };
+
+  const handleServiceChange = (serviceId: string) => {
+    const cat = catalog.find((c) => c.id === form.catalogCategoryId);
+    const item = cat?.items.find((i) => i.id === serviceId);
+    setForm((p) => ({
+      ...p,
+      catalogServiceId: serviceId,
+      name: item?.name ?? p.name,
+    }));
+  };
+
+  const isValid =
+    form.name.trim() !== "" && form.quantity >= 0 && form.unitPrice >= 0;
 
   return (
     <div
@@ -2963,51 +3007,82 @@ function InventarioFormModal({
             <X size={16} className="text-slate-400" />
           </button>
         </div>
-        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
+
+        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+          {/* Categoría */}
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1">
+              Categoría *
+            </label>
+            <select
+              className={inputCls}
+              value={form.catalogCategoryId ?? ""}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+            >
+              <option value="">— Seleccionar categoría —</option>
+              {catalog.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Servicio */}
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1">
+              Servicio / Insumo *
+            </label>
+            <select
+              className={inputCls}
+              value={form.catalogServiceId ?? ""}
+              onChange={(e) => handleServiceChange(e.target.value)}
+              disabled={!form.catalogCategoryId}
+            >
+              <option value="">
+                {form.catalogCategoryId
+                  ? serviciosEnCat.length === 0
+                    ? "Sin servicios en esta categoría"
+                    : "— Seleccionar servicio —"
+                  : "— Selecciona una categoría primero —"}
+              </option>
+              {serviciosEnCat.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            {form.catalogServiceId && (
+              <p className="text-xs text-slate-400 mt-1">
+                Nombre del insumo:{" "}
+                <span className="font-medium text-slate-600">{form.name}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Nombre manual (si no se seleccionó servicio del catálogo) */}
+          {!form.catalogServiceId && (
+            <div>
               <label className="text-xs font-medium text-slate-600 block mb-1">
-                Nombre *
+                Nombre del insumo *{" "}
+                <span className="font-normal text-slate-400">
+                  (o escribe uno manual)
+                </span>
               </label>
               <input
                 className={inputCls}
                 value={form.name}
                 onChange={(e) => set("name", e.target.value)}
-                autoFocus
+                placeholder="Ej: Ataúd MDF estándar"
               />
             </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Cantidad */}
             <div>
               <label className="text-xs font-medium text-slate-600 block mb-1">
-                Categoría
-              </label>
-              <select
-                className={inputCls}
-                value={form.category}
-                onChange={(e) =>
-                  set("category", e.target.value as InventoryCategory)
-                }
-              >
-                {INV_CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">
-                SKU / Código
-              </label>
-              <input
-                className={inputCls}
-                value={form.sku ?? ""}
-                onChange={(e) => set("sku", e.target.value)}
-                placeholder="AT-001"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">
-                Cantidad
+                Cantidad *
               </label>
               <input
                 type="number"
@@ -3017,9 +3092,11 @@ function InventarioFormModal({
                 onChange={(e) => set("quantity", +e.target.value)}
               />
             </div>
+
+            {/* Unidad */}
             <div>
               <label className="text-xs font-medium text-slate-600 block mb-1">
-                Unidad
+                Unidad de medida
               </label>
               <select
                 className={inputCls}
@@ -3031,21 +3108,47 @@ function InventarioFormModal({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Precio con IVA */}
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1">
+              Precio unitario CLP (IVA incluido) *
+            </label>
+            <input
+              type="number"
+              min={0}
+              className={inputCls}
+              value={form.unitPrice || ""}
+              onChange={(e) => set("unitPrice", +e.target.value)}
+              placeholder="0"
+            />
+            {form.unitPrice > 0 && (
+              <div
+                className="mt-2 grid grid-cols-2 gap-2 text-xs rounded-lg px-3 py-2"
+                style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}
+              >
+                <span className="text-slate-500">
+                  Precio neto:{" "}
+                  <span className="font-semibold text-slate-700">
+                    ${precioNeto.toLocaleString("es-CL")}
+                  </span>
+                </span>
+                <span className="text-slate-500">
+                  IVA (19%):{" "}
+                  <span className="font-semibold text-slate-700">
+                    ${ivaAmount.toLocaleString("es-CL")}
+                  </span>
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Stock mínimo */}
             <div>
               <label className="text-xs font-medium text-slate-600 block mb-1">
-                Precio unitario (CLP)
-              </label>
-              <input
-                type="number"
-                min={0}
-                className={inputCls}
-                value={form.unitPrice}
-                onChange={(e) => set("unitPrice", +e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">
-                Stock mínimo alerta
+                Stock mínimo (alerta)
               </label>
               <input
                 type="number"
@@ -3057,41 +3160,95 @@ function InventarioFormModal({
                 }
                 placeholder="Ej: 5"
               />
+              <p className="text-xs text-slate-400 mt-0.5">
+                Se alertará cuando el stock llegue a este número
+              </p>
             </div>
+
+            {/* SKU */}
             <div>
               <label className="text-xs font-medium text-slate-600 block mb-1">
-                Ubicación en bodega
+                SKU / Código
               </label>
               <input
                 className={inputCls}
-                value={form.location ?? ""}
-                onChange={(e) => set("location", e.target.value)}
-                placeholder="Bodega A, Estante 2"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 block mb-1">
-                Proveedor
-              </label>
-              <input
-                className={inputCls}
-                value={form.supplier ?? ""}
-                onChange={(e) => set("supplier", e.target.value)}
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="text-xs font-medium text-slate-600 block mb-1">
-                Descripción / Observaciones
-              </label>
-              <textarea
-                rows={2}
-                className={inputCls + " resize-none"}
-                value={form.description ?? ""}
-                onChange={(e) => set("description", e.target.value)}
+                value={form.sku ?? ""}
+                onChange={(e) => set("sku", e.target.value)}
+                placeholder="AT-001"
               />
             </div>
           </div>
+
+          {/* Proveedor */}
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1">
+              Proveedor
+            </label>
+            <select
+              className={inputCls}
+              value={form.supplier ?? ""}
+              onChange={(e) => set("supplier", e.target.value)}
+            >
+              <option value="">— Sin proveedor asignado —</option>
+              {proveedores
+                .filter((p) => p.active)
+                .map((p) => (
+                  <option key={p.id} value={p.name}>
+                    {p.name}
+                    {p.category ? ` · ${p.category}` : ""}
+                  </option>
+                ))}
+            </select>
+            {proveedores.length === 0 && (
+              <p className="text-xs text-amber-600 mt-1">
+                No hay proveedores registrados. Agrégalos en la pestaña
+                "Proveedores".
+              </p>
+            )}
+          </div>
+
+          {/* Ubicación (sucursal) */}
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1">
+              Ubicación / Sucursal
+            </label>
+            <select
+              className={inputCls}
+              value={form.location ?? ""}
+              onChange={(e) => set("location", e.target.value)}
+            >
+              <option value="">— Sin ubicación asignada —</option>
+              {sucursales
+                .filter((s) => s.active)
+                .map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                    {s.city ? ` · ${s.city}` : ""}
+                  </option>
+                ))}
+            </select>
+            {sucursales.length === 0 && (
+              <p className="text-xs text-amber-600 mt-1">
+                No hay sucursales registradas. Agrégalas en la pestaña "Perfil".
+              </p>
+            )}
+          </div>
+
+          {/* Descripción */}
+          <div>
+            <label className="text-xs font-medium text-slate-600 block mb-1">
+              Descripción / Observaciones
+            </label>
+            <textarea
+              rows={2}
+              className={inputCls + " resize-none"}
+              value={form.description ?? ""}
+              onChange={(e) => set("description", e.target.value)}
+              placeholder="Color, material, dimensiones…"
+            />
+          </div>
         </div>
+
         <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50">
           <button
             onClick={onClose}
@@ -3101,10 +3258,11 @@ function InventarioFormModal({
           </button>
           <button
             onClick={() => {
-              if (!form.name.trim()) return;
+              if (!isValid) return;
               onSave({ ...form, updatedAt: new Date().toISOString() });
             }}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
+            disabled={!isValid}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium disabled:opacity-40"
           >
             <Check size={14} /> {initial ? "Guardar cambios" : "Agregar insumo"}
           </button>

@@ -47,14 +47,16 @@ export type InventoryCategory =
 export interface InventoryItem {
   id: string;
   name: string;
-  category: InventoryCategory;
+  category: string; // InventoryCategory or catalog category id
+  catalogCategoryId?: string; // id de la categoría del catálogo Admin
+  catalogServiceId?: string; // id del ítem/servicio del catálogo Admin
   sku?: string; // código interno
   quantity: number;
   unit: string; // unidad, caja, kg, litros, metros…
-  unitPrice: number; // valor por unidad
+  unitPrice: number; // valor por unidad (con IVA incluido)
   description?: string; // características / observaciones
   minStock?: number; // stock mínimo de alerta
-  location?: string; // ubicación en bodega
+  location?: string; // sucursal / ubicación
   supplier?: string; // proveedor
   createdAt: string;
   updatedAt: string;
