@@ -464,7 +464,7 @@ function BudgetForm({
   onSave: (b: DeceasedBudget) => void;
   onCancel: () => void;
 }) {
-  const { catalog } = useApp();
+  const { catalog, convenios } = useApp();
   const isNew = !initial;
   const pad = String(existingCount + 1).padStart(3, "0");
   const year = new Date().getFullYear();
@@ -494,10 +494,20 @@ function BudgetForm({
     return init;
   });
 
+  // convenio + IVA state
+  const [convenioId, setConvenioId] = useState("");
+  const [taxPct, setTaxPct] = useState(19);
+
+  const selectedConvenio = convenios.find((c) => c.id === convenioId) ?? null;
+  const discountPct = selectedConvenio ? selectedConvenio.discountPct : 0;
+
   const categories = catalog.map((c) => c.name);
 
   const subtotal = form.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-  const total = subtotal - form.discount + form.tax;
+  const discountAmount = Math.round((subtotal * discountPct) / 100);
+  const baseImponible = subtotal - discountAmount;
+  const taxAmount = Math.round((baseImponible * taxPct) / 100);
+  const total = baseImponible + taxAmount;
 
   const addRow = () => {
     const id = crypto.randomUUID();
@@ -827,54 +837,124 @@ function BudgetForm({
           </div>
         </div>
 
-        {/* totals & notes */}
+        {/* convenio + totals + notes */}
         <div className="flex gap-6 items-start">
-          <div className="flex-1">
-            <label className="text-xs font-medium text-slate-600 block mb-1">
-              Notas / Condiciones
-            </label>
-            <textarea
-              rows={3}
-              className={inputCls + " resize-none"}
-              value={form.notes ?? ""}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, notes: e.target.value }))
-              }
-              placeholder="Condiciones de pago, observaciones…"
-            />
+          {/* left: notes */}
+          <div className="flex-1 space-y-4">
+            {/* convenio selector */}
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Convenio aplicado
+              </label>
+              <select
+                className={inputCls}
+                value={convenioId}
+                onChange={(e) => setConvenioId(e.target.value)}
+              >
+                <option value="">— Sin convenio —</option>
+                {convenios
+                  .filter((c) => c.active)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} — {c.entity} ({c.discountPct}% dto.)
+                    </option>
+                  ))}
+              </select>
+              {selectedConvenio && (
+                <p className="text-xs text-emerald-600 mt-1 font-medium">
+                  ✓ Descuento del {selectedConvenio.discountPct}% aplicado (
+                  {selectedConvenio.entity})
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Notas / Condiciones
+              </label>
+              <textarea
+                rows={3}
+                className={inputCls + " resize-none"}
+                value={form.notes ?? ""}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, notes: e.target.value }))
+                }
+                placeholder="Condiciones de pago, observaciones…"
+              />
+            </div>
           </div>
-          <div className="w-64 space-y-2 mt-5">
-            <div className="flex justify-between text-sm text-slate-500">
-              <span>Subtotal</span>
-              <span className="font-medium">{fmt(subtotal)}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm text-slate-500">
-              <span>Descuento</span>
-              <input
-                type="number"
-                min={0}
-                className="w-32 text-right border border-slate-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                value={form.discount}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, discount: +e.target.value }))
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between text-sm text-slate-500">
-              <span>IVA / Impuestos</span>
-              <input
-                type="number"
-                min={0}
-                className="w-32 text-right border border-slate-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                value={form.tax}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, tax: +e.target.value }))
-                }
-              />
-            </div>
-            <div className="flex justify-between font-bold text-slate-800 border-t border-slate-200 pt-2.5 text-base">
-              <span>Total</span>
-              <span className="text-indigo-700 text-xl">{fmt(total)}</span>
+
+          {/* right: totals */}
+          <div className="w-72 shrink-0">
+            <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+              {/* subtotal */}
+              <div className="flex justify-between items-center px-4 py-3 border-b border-slate-200">
+                <span className="text-sm text-slate-500">Subtotal neto</span>
+                <span className="text-sm font-medium text-slate-700 tabular-nums">
+                  {fmt(subtotal)}
+                </span>
+              </div>
+
+              {/* descuento */}
+              <div className="flex justify-between items-center px-4 py-3 border-b border-slate-200">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-500">Descuento</span>
+                  {discountPct > 0 && (
+                    <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-semibold">
+                      {discountPct}%
+                    </span>
+                  )}
+                </div>
+                <span
+                  className={`text-sm font-medium tabular-nums ${discountAmount > 0 ? "text-emerald-600" : "text-slate-400"}`}
+                >
+                  {discountAmount > 0 ? `−${fmt(discountAmount)}` : fmt(0)}
+                </span>
+              </div>
+
+              {/* base imponible */}
+              <div className="flex justify-between items-center px-4 py-3 border-b border-slate-200 bg-white">
+                <span className="text-sm font-semibold text-slate-700">
+                  Base imponible
+                </span>
+                <span className="text-sm font-bold text-slate-800 tabular-nums">
+                  {fmt(baseImponible)}
+                </span>
+              </div>
+
+              {/* IVA */}
+              <div className="flex justify-between items-center px-4 py-3 border-b border-slate-200">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-500">IVA</span>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      className="w-14 text-center border border-slate-200 rounded-lg px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white"
+                      value={taxPct}
+                      onChange={(e) => setTaxPct(Math.max(0, +e.target.value))}
+                    />
+                    <span className="text-xs text-slate-400">%</span>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-slate-600 tabular-nums">
+                  +{fmt(taxAmount)}
+                </span>
+              </div>
+
+              {/* total */}
+              <div className="flex justify-between items-center px-4 py-4 bg-white">
+                <span className="text-base font-bold text-slate-800">
+                  Total con IVA
+                </span>
+                <span
+                  className="text-xl font-bold tabular-nums"
+                  style={{ color: "#4F46E5" }}
+                >
+                  {fmt(total)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -891,6 +971,8 @@ function BudgetForm({
           onClick={() =>
             onSave({
               ...form,
+              discount: discountAmount,
+              tax: taxAmount,
               items: form.items.map((i) => ({
                 ...i,
                 category: rowCat[i.id] ?? i.category,
