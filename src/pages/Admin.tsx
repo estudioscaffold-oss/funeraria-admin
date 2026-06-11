@@ -119,6 +119,382 @@ const REGIONES = [
   "Aysén",
   "Magallanes",
 ];
+
+const COMUNAS_POR_REGION: Record<string, string[]> = {
+  "Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
+  Tarapacá: [
+    "Iquique",
+    "Alto Hospicio",
+    "Pozo Almonte",
+    "Camiña",
+    "Colchane",
+    "Huara",
+    "Pica",
+  ],
+  Antofagasta: [
+    "Antofagasta",
+    "Mejillones",
+    "Sierra Gorda",
+    "Taltal",
+    "Calama",
+    "Ollagüe",
+    "San Pedro de Atacama",
+    "Tocopilla",
+    "María Elena",
+  ],
+  Atacama: [
+    "Copiapó",
+    "Caldera",
+    "Tierra Amarilla",
+    "Chañaral",
+    "Diego de Almagro",
+    "Vallenar",
+    "Alto del Carmen",
+    "Freirina",
+    "Huasco",
+  ],
+  Coquimbo: [
+    "La Serena",
+    "Coquimbo",
+    "Andacollo",
+    "La Higuera",
+    "Paiguano",
+    "Vicuña",
+    "Illapel",
+    "Canela",
+    "Los Vilos",
+    "Salamanca",
+    "Ovalle",
+    "Combarbalá",
+    "Monte Patria",
+    "Punitaqui",
+    "Río Hurtado",
+  ],
+  Valparaíso: [
+    "Valparaíso",
+    "Casablanca",
+    "Concón",
+    "Juan Fernández",
+    "Puchuncaví",
+    "Quintero",
+    "Viña del Mar",
+    "Isla de Pascua",
+    "Los Andes",
+    "Calle Larga",
+    "Rinconada",
+    "San Esteban",
+    "La Ligua",
+    "Cabildo",
+    "Papudo",
+    "Petorca",
+    "Zapallar",
+    "Quillota",
+    "Calera",
+    "Hijuelas",
+    "La Cruz",
+    "Nogales",
+    "San Antonio",
+    "Algarrobo",
+    "Cartagena",
+    "El Quisco",
+    "El Tabo",
+    "Santo Domingo",
+    "San Felipe",
+    "Catemu",
+    "Llaillay",
+    "Panquehue",
+    "Putaendo",
+    "Santa María",
+    "Quilpué",
+    "Limache",
+    "Olmué",
+    "Villa Alemana",
+  ],
+  "Metropolitana de Santiago": [
+    "Santiago",
+    "Cerrillos",
+    "Cerro Navia",
+    "Conchalí",
+    "El Bosque",
+    "Estación Central",
+    "Huechuraba",
+    "Independencia",
+    "La Cisterna",
+    "La Florida",
+    "La Granja",
+    "La Pintana",
+    "La Reina",
+    "Las Condes",
+    "Lo Barnechea",
+    "Lo Espejo",
+    "Lo Prado",
+    "Macul",
+    "Maipú",
+    "Ñuñoa",
+    "Pedro Aguirre Cerda",
+    "Peñalolén",
+    "Providencia",
+    "Pudahuel",
+    "Quilicura",
+    "Quinta Normal",
+    "Recoleta",
+    "Renca",
+    "San Joaquín",
+    "San Miguel",
+    "San Ramón",
+    "Vitacura",
+    "Puente Alto",
+    "Pirque",
+    "San José de Maipo",
+    "Colina",
+    "Lampa",
+    "Tiltil",
+    "San Bernardo",
+    "Buin",
+    "Calera de Tango",
+    "Paine",
+    "Melipilla",
+    "Alhué",
+    "Curacaví",
+    "María Pinto",
+    "San Pedro",
+    "Talagante",
+    "El Monte",
+    "Isla de Maipo",
+    "Padre Hurtado",
+    "Peñaflor",
+  ],
+  "O'Higgins": [
+    "Rancagua",
+    "Codegua",
+    "Coinco",
+    "Coltauco",
+    "Doñihue",
+    "Graneros",
+    "Las Cabras",
+    "Machalí",
+    "Malloa",
+    "Mostazal",
+    "Olivar",
+    "Peumo",
+    "Pichidegua",
+    "Quinta de Tilcoco",
+    "Rengo",
+    "Requínoa",
+    "San Vicente",
+    "Pichilemu",
+    "La Estrella",
+    "Litueche",
+    "Marchihue",
+    "Navidad",
+    "Paredones",
+    "San Fernando",
+    "Chépica",
+    "Chimbarongo",
+    "Lolol",
+    "Nancagua",
+    "Palmilla",
+    "Peralillo",
+    "Placilla",
+    "Pumanque",
+    "Santa Cruz",
+  ],
+  Maule: [
+    "Talca",
+    "Constitución",
+    "Curepto",
+    "Empedrado",
+    "Maule",
+    "Pelarco",
+    "Pencahue",
+    "Río Claro",
+    "San Clemente",
+    "San Rafael",
+    "Cauquenes",
+    "Chanco",
+    "Pelluhue",
+    "Curicó",
+    "Hualañé",
+    "Licantén",
+    "Molina",
+    "Rauco",
+    "Romeral",
+    "Sagrada Familia",
+    "Teno",
+    "Vichuquén",
+    "Linares",
+    "Colbún",
+    "Longaví",
+    "Parral",
+    "Retiro",
+    "San Javier",
+    "Villa Alegre",
+    "Yerbas Buenas",
+  ],
+  Ñuble: [
+    "Chillán",
+    "Bulnes",
+    "Chillán Viejo",
+    "El Carmen",
+    "Pemuco",
+    "Pinto",
+    "Quillón",
+    "San Ignacio",
+    "Yungay",
+    "Cobquecura",
+    "Coelemu",
+    "Ninhue",
+    "Portezuelo",
+    "Quirihue",
+    "Ránquil",
+    "Treguaco",
+    "Coihueco",
+    "Ñiquén",
+    "San Carlos",
+    "San Fabián",
+    "San Nicolás",
+  ],
+  Biobío: [
+    "Concepción",
+    "Coronel",
+    "Chiguayante",
+    "Florida",
+    "Hualpén",
+    "Hualqui",
+    "Lota",
+    "Penco",
+    "San Pedro de la Paz",
+    "Santa Juana",
+    "Talcahuano",
+    "Tomé",
+    "Lebu",
+    "Arauco",
+    "Cañete",
+    "Contulmo",
+    "Curanilahue",
+    "Los Álamos",
+    "Tirúa",
+    "Los Ángeles",
+    "Antuco",
+    "Cabrero",
+    "Laja",
+    "Mulchén",
+    "Nacimiento",
+    "Negrete",
+    "Quilaco",
+    "Quilleco",
+    "San Rosendo",
+    "Santa Bárbara",
+    "Tucapel",
+    "Yumbel",
+    "Alto Biobío",
+  ],
+  "La Araucanía": [
+    "Temuco",
+    "Carahue",
+    "Cunco",
+    "Curarrehue",
+    "Freire",
+    "Galvarino",
+    "Gorbea",
+    "Lautaro",
+    "Loncoche",
+    "Melipeuco",
+    "Nueva Imperial",
+    "Padre Las Casas",
+    "Perquenco",
+    "Pitrufquén",
+    "Pucón",
+    "Saavedra",
+    "teodoro Schmidt",
+    "Toltén",
+    "Vilcún",
+    "Villarrica",
+    "Cholchol",
+    "Angol",
+    "Collipulli",
+    "Curacautín",
+    "Ercilla",
+    "Lonquimay",
+    "Los Sauces",
+    "Lumaco",
+    "Purén",
+    "Renaico",
+    "Traiguén",
+    "Victoria",
+  ],
+  "Los Ríos": [
+    "Valdivia",
+    "Corral",
+    "Futrono",
+    "La Unión",
+    "Lago Ranco",
+    "Lanco",
+    "Los Lagos",
+    "Máfil",
+    "Mariquina",
+    "Paillaco",
+    "Panguipulli",
+    "Río Bueno",
+  ],
+  "Los Lagos": [
+    "Puerto Montt",
+    "Calbuco",
+    "Cochamó",
+    "Fresia",
+    "Frutillar",
+    "Los Muermos",
+    "Llanquihue",
+    "Maullín",
+    "Puerto Varas",
+    "Castro",
+    "Ancud",
+    "Chonchi",
+    "Curaco de Vélez",
+    "Dalcahue",
+    "Puqueldón",
+    "Queilén",
+    "Quellón",
+    "Quemchi",
+    "Quinchao",
+    "Osorno",
+    "Puerto Octay",
+    "Purranque",
+    "Puyehue",
+    "Río Negro",
+    "San Juan de la Costa",
+    "San Pablo",
+    "Chaitén",
+    "Futaleufú",
+    "Hualaihué",
+    "Palena",
+  ],
+  Aysén: [
+    "Coyhaique",
+    "Lago Verde",
+    "Aysén",
+    "Cisnes",
+    "Guaitecas",
+    "Cochrane",
+    "O'Higgins",
+    "Tortel",
+    "Chile Chico",
+    "Río Ibáñez",
+  ],
+  Magallanes: [
+    "Punta Arenas",
+    "Laguna Blanca",
+    "Río Verde",
+    "San Gregorio",
+    "Cabo de Hornos",
+    "Antártica",
+    "Porvenir",
+    "Primavera",
+    "Timaukel",
+    "Natales",
+    "Torres del Paine",
+  ],
+};
 import {
   USER_ROLE_LABELS,
   USER_ROLE_COLORS,
@@ -3582,11 +3958,18 @@ function DestinosPane({
   const [filterCity, setFilterCity] = useState("");
   const [search, setSearch] = useState("");
 
+  // comunas disponibles según región seleccionada en el FORMULARIO
+  const formComunas = form.region
+    ? (COMUNAS_POR_REGION[form.region] ?? [])
+    : [];
+  // comunas disponibles según región seleccionada en el FILTRO
+  const filterComunas = filterRegion
+    ? (COMUNAS_POR_REGION[filterRegion] ?? [])
+    : [];
+
   const filtered = destinos.filter((d) => {
     const matchRegion = !filterRegion || d.region === filterRegion;
-    const matchCity =
-      !filterCity ||
-      (d.city ?? "").toLowerCase().includes(filterCity.toLowerCase());
+    const matchCity = !filterCity || d.city === filterCity;
     const matchSearch =
       !search || d.name.toLowerCase().includes(search.toLowerCase());
     return matchRegion && matchCity && matchSearch;
@@ -3619,19 +4002,29 @@ function DestinosPane({
           <select
             className={inputCls + " w-52"}
             value={filterRegion}
-            onChange={(e) => setFilterRegion(e.target.value)}
+            onChange={(e) => {
+              setFilterRegion(e.target.value);
+              setFilterCity("");
+            }}
           >
             <option value="">Todas las regiones</option>
             {REGIONES.map((r) => (
               <option key={r}>{r}</option>
             ))}
           </select>
-          <input
-            className={inputCls + " w-40"}
-            placeholder="Ciudad / Comuna…"
+          <select
+            className={inputCls + " w-44"}
             value={filterCity}
             onChange={(e) => setFilterCity(e.target.value)}
-          />
+            disabled={!filterRegion}
+          >
+            <option value="">
+              {filterRegion ? "Todas las comunas" : "— Selecciona región —"}
+            </option>
+            {filterComunas.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
         </div>
         <button
           onClick={() => {
@@ -3695,7 +4088,11 @@ function DestinosPane({
                 className={inputCls}
                 value={form.region ?? ""}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, region: e.target.value }))
+                  setForm((p) => ({
+                    ...p,
+                    region: e.target.value,
+                    city: "", // resetear ciudad al cambiar región
+                  }))
                 }
               >
                 <option value="">Seleccionar región</option>
@@ -3708,14 +4105,30 @@ function DestinosPane({
               <label className="text-xs font-medium text-slate-600 block mb-1">
                 Ciudad / Comuna
               </label>
-              <input
-                className={inputCls}
-                value={form.city ?? ""}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, city: e.target.value }))
-                }
-                placeholder="Ej: Santiago, Viña del Mar…"
-              />
+              {formComunas.length > 0 ? (
+                <select
+                  className={inputCls}
+                  value={form.city ?? ""}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, city: e.target.value }))
+                  }
+                >
+                  <option value="">Seleccionar comuna</option>
+                  {formComunas.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className={inputCls}
+                  value={form.city ?? ""}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, city: e.target.value }))
+                  }
+                  placeholder="Selecciona primero una región…"
+                  disabled={!form.region}
+                />
+              )}
             </div>
             <div>
               <label className="text-xs font-medium text-slate-600 block mb-1">

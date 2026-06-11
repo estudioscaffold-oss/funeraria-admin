@@ -147,26 +147,33 @@ export default function Sidebar() {
       }}
     >
       {/* Logo empresa (si está configurado) o logo Veladesk */}
-      <div className="px-6 pt-8 pb-5">
+      <div className="px-5 pt-6 pb-5">
         {companyLogo ? (
-          <div className="flex flex-col items-center gap-2">
+          <div
+            className="rounded-xl px-4 py-3 flex flex-col items-center gap-2"
+            style={{
+              background: "#FFFFFF",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
+            }}
+          >
             <img
               src={companyLogo}
               alt={companyName || "Logo empresa"}
-              className="max-h-16 max-w-full object-contain"
-              style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))" }}
+              className="max-h-14 max-w-full object-contain"
             />
             {companyName && (
               <p
                 className="text-xs text-center font-semibold tracking-wide truncate w-full"
-                style={{ color: "#D4AF70" }}
+                style={{ color: "#0A1628" }}
               >
                 {companyName}
               </p>
             )}
           </div>
         ) : (
-          <VelodeskLogo />
+          <div className="px-1">
+            <VelodeskLogo />
+          </div>
         )}
         <div
           className="mt-6 h-px"
