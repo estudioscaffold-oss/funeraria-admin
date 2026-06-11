@@ -624,7 +624,10 @@ export default function Inventario() {
               </thead>
               <tbody>
                 {filtered.map((item) => {
-                  const cfg = CATEGORY_CFG[item.category];
+                  const cfg =
+                    CATEGORY_CFG[
+                      item.category as import("../types").InventoryCategory
+                    ] ?? CATEGORY_CFG["otro"];
                   return (
                     <tr
                       key={item.id}

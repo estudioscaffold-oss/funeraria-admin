@@ -31,7 +31,6 @@ import type {
   CatalogItem,
   UserRole,
   InventoryItem,
-  InventoryCategory,
   Sucursal,
 } from "../types";
 
@@ -2894,17 +2893,6 @@ const AUDIT_ACTION_COLORS: Record<string, string> = {
 };
 
 /* ── Formulario de inventario (Admin) ────────────── */
-const INV_CATEGORIES: { value: InventoryCategory; label: string }[] = [
-  { value: "ataudes_urnas", label: "Ataúdes y Urnas" },
-  { value: "preparacion", label: "Preparación" },
-  { value: "velatorio", label: "Velatorio" },
-  { value: "traslado", label: "Traslado" },
-  { value: "ceremonia", label: "Ceremonia" },
-  { value: "documentacion", label: "Documentación" },
-  { value: "limpieza", label: "Limpieza" },
-  { value: "oficina", label: "Oficina" },
-  { value: "otro", label: "Otro" },
-];
 const INV_UNITS = [
   "unidad",
   "caja",
