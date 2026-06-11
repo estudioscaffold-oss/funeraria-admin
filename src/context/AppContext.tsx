@@ -11,6 +11,10 @@ import type {
   AppUser,
   Convenio,
   ProcessTask,
+  InventoryItem,
+  InventoryAuditEntry,
+  AuditAction,
+  Sucursal,
 } from "../types";
 import {
   mockDeceased,
@@ -18,6 +22,8 @@ import {
   mockCatalog,
   mockUsers,
   mockConvenios,
+  MOCK_INVENTORY_ITEMS,
+  MOCK_SUCURSALES,
 } from "../utils/mockData";
 import {
   dbDeceased,
@@ -32,6 +38,19 @@ const IS_ONLINE = !!(
   import.meta.env.VITE_SUPABASE_URL !== "REEMPLAZA_CON_TU_URL"
 );
 
+/* ── localStorage helpers ─────────────────────── */
+function lsLoad<T>(key: string, def: T): T {
+  try {
+    const v = localStorage.getItem(key);
+    return v ? (JSON.parse(v) as T) : def;
+  } catch {
+    return def;
+  }
+}
+function lsSave<T>(key: string, v: T) {
+  localStorage.setItem(key, JSON.stringify(v));
+}
+
 interface AppContextType {
   loading: boolean;
   deceased: DeceasedRecord[];
@@ -40,6 +59,23 @@ interface AppContextType {
   users: AppUser[];
   convenios: Convenio[];
   catalog: CatalogCategory[];
+  /* inventory */
+  inventory: InventoryItem[];
+  inventoryLog: InventoryAuditEntry[];
+  addInventoryItem: (item: InventoryItem) => void;
+  updateInventoryItem: (item: InventoryItem, notes?: string) => void;
+  deleteInventoryItem: (id: string) => void;
+  adjustInventoryStock: (
+    id: string,
+    newQty: number,
+    action: AuditAction,
+    notes?: string,
+  ) => void;
+  /* sucursales */
+  sucursales: Sucursal[];
+  addSucursal: (s: Sucursal) => void;
+  updateSucursal: (id: string, s: Partial<Sucursal>) => void;
+  deleteSucursal: (id: string) => void;
   addDeceased: (r: DeceasedRecord) => void;
   updateDeceased: (id: string, r: Partial<DeceasedRecord>) => void;
   deleteDeceased: (id: string) => void;
@@ -94,6 +130,105 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [catalog, setCatalog] = useState<CatalogCategory[]>(
     IS_ONLINE ? [] : mockCatalog,
   );
+
+  /* inventory + audit — always localStorage */
+  const [inventory, setInventory] = useState<InventoryItem[]>(() =>
+    lsLoad("veladesk-inventory", MOCK_INVENTORY_ITEMS),
+  );
+  const [inventoryLog, setInventoryLog] = useState<InventoryAuditEntry[]>(() =>
+    lsLoad("veladesk-inventory-log", []),
+  );
+
+  /* sucursales — always localStorage */
+  const [sucursales, setSucursales] = useState<Sucursal[]>(() =>
+    lsLoad("veladesk-sucursales", MOCK_SUCURSALES),
+  );
+
+  /* ── helpers ── */
+  const saveInventory = (next: InventoryItem[]) => {
+    setInventory(next);
+    lsSave("veladesk-inventory", next);
+  };
+  const appendLog = (entry: Omit<InventoryAuditEntry, "id" | "date">) => {
+    const full: InventoryAuditEntry = {
+      ...entry,
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+    };
+    setInventoryLog((p) => {
+      const next = [full, ...p].slice(0, 500); // max 500 entradas
+      lsSave("veladesk-inventory-log", next);
+      return next;
+    });
+  };
+
+  /* ── inventory CRUD ── */
+  const addInventoryItem = (item: InventoryItem) => {
+    saveInventory([item, ...inventory]);
+    appendLog({
+      itemId: item.id,
+      itemName: item.name,
+      action: "crear",
+      quantityAfter: item.quantity,
+    });
+  };
+  const updateInventoryItem = (item: InventoryItem, notes?: string) => {
+    const prev = inventory.find((i) => i.id === item.id);
+    saveInventory(inventory.map((i) => (i.id === item.id ? item : i)));
+    appendLog({
+      itemId: item.id,
+      itemName: item.name,
+      action: "editar",
+      quantityBefore: prev?.quantity,
+      quantityAfter: item.quantity,
+      notes,
+    });
+  };
+  const deleteInventoryItem = (id: string) => {
+    const item = inventory.find((i) => i.id === id);
+    saveInventory(inventory.filter((i) => i.id !== id));
+    if (item)
+      appendLog({
+        itemId: id,
+        itemName: item.name,
+        action: "eliminar",
+        quantityBefore: item.quantity,
+      });
+  };
+  const adjustInventoryStock = (
+    id: string,
+    newQty: number,
+    action: AuditAction,
+    notes?: string,
+  ) => {
+    const item = inventory.find((i) => i.id === id);
+    if (!item) return;
+    const updated = {
+      ...item,
+      quantity: newQty,
+      updatedAt: new Date().toISOString(),
+    };
+    saveInventory(inventory.map((i) => (i.id === id ? updated : i)));
+    appendLog({
+      itemId: id,
+      itemName: item.name,
+      action,
+      quantityBefore: item.quantity,
+      quantityAfter: newQty,
+      notes,
+    });
+  };
+
+  /* ── sucursales CRUD ── */
+  const saveSucursales = (next: Sucursal[]) => {
+    setSucursales(next);
+    lsSave("veladesk-sucursales", next);
+  };
+  const addSucursal = (s: Sucursal) => saveSucursales([...sucursales, s]);
+  const updateSucursal = (id: string, s: Partial<Sucursal>) =>
+    saveSucursales(sucursales.map((x) => (x.id === id ? { ...x, ...s } : x)));
+  const deleteSucursal = (id: string) =>
+    saveSucursales(sucursales.filter((x) => x.id !== id));
 
   /* ── load from Supabase on mount + polling every 3 seconds ── */
   useEffect(() => {
@@ -385,6 +520,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addConvenio,
         updateConvenio,
         deleteConvenio,
+        inventory,
+        inventoryLog,
+        addInventoryItem,
+        updateInventoryItem,
+        deleteInventoryItem,
+        adjustInventoryStock,
+        sucursales,
+        addSucursal,
+        updateSucursal,
+        deleteSucursal,
       }}
     >
       {children}

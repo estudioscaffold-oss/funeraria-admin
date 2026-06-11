@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Activity,
@@ -109,6 +110,32 @@ function VelodeskLogo() {
 
 export default function Sidebar() {
   const location = useLocation();
+  const [companyLogo, setCompanyLogo] = useState<string>("");
+  const [companyName, setCompanyName] = useState<string>("");
+
+  // Lee el logo y nombre guardados en localStorage desde Admin > Perfil
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        const raw = localStorage.getItem("veladesk-profile");
+        if (raw) {
+          const p = JSON.parse(raw);
+          setCompanyLogo(p.logo ?? "");
+          setCompanyName(p.name ?? "");
+        }
+      } catch {
+        /* noop */
+      }
+    };
+    refresh();
+    window.addEventListener("storage", refresh);
+    // polling ligero para detectar cambios en la misma pestaña
+    const t = setInterval(refresh, 2000);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      clearInterval(t);
+    };
+  }, []);
 
   return (
     <aside
@@ -119,9 +146,28 @@ export default function Sidebar() {
         borderColor: "rgba(201,169,110,0.15)",
       }}
     >
-      {/* Logo */}
+      {/* Logo empresa (si está configurado) o logo Veladesk */}
       <div className="px-6 pt-8 pb-5">
-        <VelodeskLogo />
+        {companyLogo ? (
+          <div className="flex flex-col items-center gap-2">
+            <img
+              src={companyLogo}
+              alt={companyName || "Logo empresa"}
+              className="max-h-16 max-w-full object-contain"
+              style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))" }}
+            />
+            {companyName && (
+              <p
+                className="text-xs text-center font-semibold tracking-wide truncate w-full"
+                style={{ color: "#D4AF70" }}
+              >
+                {companyName}
+              </p>
+            )}
+          </div>
+        ) : (
+          <VelodeskLogo />
+        )}
         <div
           className="mt-6 h-px"
           style={{
@@ -231,7 +277,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-6 pb-6">
+      <div className="px-6 pb-5">
         <div
           className="h-px mb-4"
           style={{
@@ -239,6 +285,12 @@ export default function Sidebar() {
               "linear-gradient(90deg,transparent,rgba(201,169,110,0.3),transparent)",
           }}
         />
+        {/* Si hay logo empresa, mostrar Veladesk pequeño aquí */}
+        {companyLogo && (
+          <div className="mb-3 opacity-40 hover:opacity-70 transition-opacity">
+            <VelodeskLogo />
+          </div>
+        )}
         <div className="flex items-center gap-2 px-2">
           <div
             className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"

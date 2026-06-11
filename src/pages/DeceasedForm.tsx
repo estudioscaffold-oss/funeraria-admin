@@ -22,7 +22,6 @@ import {
   SERVICE_LABELS,
   STATUS_LABELS,
   RELIGIOUS_LABELS,
-  SUCURSALES,
 } from "../utils/mockData";
 
 /* ── empty form ─────────────────────────────── */
@@ -176,7 +175,7 @@ const PREVISION = [
 export default function DeceasedForm() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { deceased, addDeceased, updateDeceased } = useApp();
+  const { deceased, addDeceased, updateDeceased, sucursales } = useApp();
 
   const existing =
     id && id !== "nuevo" ? deceased.find((d) => d.id === id) : null;
@@ -269,9 +268,13 @@ export default function DeceasedForm() {
               onChange={(e) => set("sucursal", e.target.value)}
             >
               <option value="">Seleccionar sucursal</option>
-              {SUCURSALES.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
+              {sucursales
+                .filter((s) => s.active)
+                .map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
             </select>
           </Field>
           <Field label="Personal asignado">

@@ -33,7 +33,6 @@ import {
   RELIGIOUS_LABELS,
   BUDGET_STATUS_LABELS,
   BUDGET_STATUS_COLORS,
-  SUCURSALES,
   VENDEDORES,
 } from "../utils/mockData";
 import { format } from "date-fns";
@@ -464,7 +463,7 @@ function BudgetForm({
   onSave: (b: DeceasedBudget) => void;
   onCancel: () => void;
 }) {
-  const { catalog, convenios } = useApp();
+  const { catalog, convenios, sucursales } = useApp();
   const isNew = !initial;
   const pad = String(existingCount + 1).padStart(3, "0");
   const year = new Date().getFullYear();
@@ -474,7 +473,7 @@ function BudgetForm({
       id: crypto.randomUUID(),
       number: `PPTO-${year}-${pad}`,
       title: "",
-      sucursal: SUCURSALES[0],
+      sucursal: sucursales.find((s) => s.active)?.name ?? "",
       vendedor: VENDEDORES[0],
       date: new Date().toISOString().split("T")[0],
       items: [],
@@ -635,9 +634,14 @@ function BudgetForm({
                 setForm((p) => ({ ...p, sucursal: e.target.value }))
               }
             >
-              {SUCURSALES.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
+              <option value="">Seleccionar sucursal</option>
+              {sucursales
+                .filter((s) => s.active)
+                .map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
             </select>
           </div>
           <div>

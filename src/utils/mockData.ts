@@ -6,15 +6,82 @@ import type {
   CatalogCategory,
   AppUser,
   Convenio,
+  InventoryItem,
+  Sucursal,
 } from "../types";
 
-// ─── Catálogo de sucursales ───────────────────────────────────────────────────
-export const SUCURSALES = [
-  "Casa Central",
-  "Sucursal Norte",
-  "Sucursal Sur",
-  "Sucursal Oriente",
-  "Sucursal Poniente",
+// ─── Sucursales mock (seed inicial) ──────────────────────────────────────────
+export const MOCK_SUCURSALES: Sucursal[] = [
+  {
+    id: "suc-1",
+    name: "Casa Central",
+    address: "Av. Principal 1234",
+    city: "Santiago",
+    phone: "+56 2 2345 6789",
+    email: "central@veladesk.cl",
+    managerName: "Juan Pérez",
+    managerPhone: "+56 9 8765 4321",
+    active: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "suc-2",
+    name: "Sucursal Norte",
+    address: "Calle Norte 567",
+    city: "Concepción",
+    phone: "+56 2 2345 6790",
+    email: "norte@veladesk.cl",
+    managerName: "María González",
+    managerPhone: "+56 9 8765 4322",
+    active: true,
+    createdAt: new Date().toISOString(),
+  },
+];
+
+// Helper para obtener nombres de sucursales (compatibilidad)
+export const SUCURSALES = ["Casa Central", "Sucursal Norte", "Sucursal Sur"];
+
+// ─── Inventario mock (seed inicial) ──────────────────────────────────────────
+export const MOCK_INVENTORY_ITEMS: InventoryItem[] = [
+  {
+    id: "inv1",
+    name: "Ataúd madera MDF estándar",
+    category: "ataudes_urnas",
+    sku: "AT-001",
+    quantity: 8,
+    unit: "unidad",
+    unitPrice: 180000,
+    minStock: 3,
+    location: "Bodega A",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "inv2",
+    name: "Urna cerámica blanca",
+    category: "ataudes_urnas",
+    sku: "UR-001",
+    quantity: 12,
+    unit: "unidad",
+    unitPrice: 45000,
+    minStock: 4,
+    location: "Bodega A",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "inv3",
+    name: "Formol 37%",
+    category: "preparacion",
+    sku: "PR-001",
+    quantity: 20,
+    unit: "litros",
+    unitPrice: 8500,
+    minStock: 5,
+    location: "Bodega B",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
 ];
 
 // ─── Tareas predeterminadas del proceso funerario ────────────────────────────

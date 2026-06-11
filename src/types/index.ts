@@ -1,3 +1,37 @@
+/* ─── Sucursal ───────────────────────────────── */
+export interface Sucursal {
+  id: string;
+  name: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  email?: string;
+  managerName?: string;
+  managerPhone?: string;
+  active: boolean;
+  createdAt: string;
+}
+
+/* ─── Inventory audit log ────────────────────── */
+export type AuditAction =
+  | "crear"
+  | "editar"
+  | "eliminar"
+  | "entrada"
+  | "salida"
+  | "ajuste";
+
+export interface InventoryAuditEntry {
+  id: string;
+  date: string; // ISO
+  itemId: string;
+  itemName: string;
+  action: AuditAction;
+  quantityBefore?: number;
+  quantityAfter?: number;
+  notes?: string;
+}
+
 /* ─── Inventory types ───────────────────────── */
 export type InventoryCategory =
   | "ataudes_urnas"

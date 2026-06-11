@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useApp } from "../context/AppContext";
 import type { InventoryItem, InventoryCategory } from "../types";
 import {
   Plus,
@@ -8,7 +9,6 @@ import {
   Search,
   Package,
   AlertTriangle,
-  DollarSign,
   Layers,
   TrendingDown,
 } from "lucide-react";
@@ -69,160 +69,6 @@ const inputCls = "w-full rounded-xl px-3 py-2.5 text-sm input-veladesk";
 const labelCls =
   "block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5";
 
-/* ─── Mock data ──────────────────────────────── */
-const MOCK_ITEMS: InventoryItem[] = [
-  {
-    id: "inv1",
-    name: "Ataúd madera MDF estándar",
-    category: "ataudes_urnas",
-    sku: "AT-001",
-    quantity: 8,
-    unit: "unidad",
-    unitPrice: 180000,
-    minStock: 3,
-    location: "Bodega A - Estante 1",
-    supplier: "Maderas del Sur",
-    description: "Tapizado interior blanco, herrajes dorados",
-    createdAt: "2026-01-01T00:00:00Z",
-    updatedAt: "2026-06-01T00:00:00Z",
-  },
-  {
-    id: "inv2",
-    name: "Ataúd madera pino",
-    category: "ataudes_urnas",
-    sku: "AT-002",
-    quantity: 4,
-    unit: "unidad",
-    unitPrice: 280000,
-    minStock: 2,
-    location: "Bodega A - Estante 2",
-    supplier: "Maderas del Sur",
-    description: "Barniz natural, herrajes plateados",
-    createdAt: "2026-01-01T00:00:00Z",
-    updatedAt: "2026-06-01T00:00:00Z",
-  },
-  {
-    id: "inv3",
-    name: "Urna cremación estándar",
-    category: "ataudes_urnas",
-    sku: "UR-001",
-    quantity: 12,
-    unit: "unidad",
-    unitPrice: 85000,
-    minStock: 5,
-    location: "Bodega A - Estante 3",
-    supplier: "Cerámicas Arte",
-    description: "Cerámica blanca, tapa a rosca",
-    createdAt: "2026-01-01T00:00:00Z",
-    updatedAt: "2026-05-15T00:00:00Z",
-  },
-  {
-    id: "inv4",
-    name: "Urna cremación mármol",
-    category: "ataudes_urnas",
-    sku: "UR-002",
-    quantity: 3,
-    unit: "unidad",
-    unitPrice: 220000,
-    minStock: 2,
-    location: "Bodega A - Estante 3",
-    supplier: "Cerámicas Arte",
-    description: "Mármol blanco veteado, grabado incluido",
-    createdAt: "2026-01-01T00:00:00Z",
-    updatedAt: "2026-04-01T00:00:00Z",
-  },
-  {
-    id: "inv5",
-    name: "Formol al 10%",
-    category: "preparacion",
-    sku: "PR-001",
-    quantity: 20,
-    unit: "litros",
-    unitPrice: 8500,
-    minStock: 8,
-    location: "Bodega B - Refrigerado",
-    supplier: "Química Ltda.",
-    description: "Para tanatopraxia, mantener a 4°C",
-    createdAt: "2026-01-01T00:00:00Z",
-    updatedAt: "2026-06-05T00:00:00Z",
-  },
-  {
-    id: "inv6",
-    name: "Traje hombre talla M",
-    category: "preparacion",
-    sku: "PR-010",
-    quantity: 5,
-    unit: "unidad",
-    unitPrice: 25000,
-    minStock: 3,
-    location: "Bodega B - Armario 1",
-    supplier: "Textiles SA",
-    description: "Negro, tela poliéster, incluye corbata",
-    createdAt: "2026-02-01T00:00:00Z",
-    updatedAt: "2026-06-01T00:00:00Z",
-  },
-  {
-    id: "inv7",
-    name: "Flores artificiales corona",
-    category: "velatorio",
-    sku: "VL-001",
-    quantity: 15,
-    unit: "unidad",
-    unitPrice: 18000,
-    minStock: 4,
-    location: "Bodega C - Estante 1",
-    supplier: "Flores Díaz",
-    description: "Corona 60cm diámetro, mix blanco/lila",
-    createdAt: "2026-01-15T00:00:00Z",
-    updatedAt: "2026-05-20T00:00:00Z",
-  },
-  {
-    id: "inv8",
-    name: "Velas cirio 40cm",
-    category: "velatorio",
-    sku: "VL-002",
-    quantity: 2,
-    unit: "caja",
-    unitPrice: 12000,
-    minStock: 3,
-    location: "Bodega C - Estante 2",
-    supplier: "Cirios Chile",
-    description: "Caja x24 unidades, blancas",
-    createdAt: "2026-01-01T00:00:00Z",
-    updatedAt: "2026-05-10T00:00:00Z",
-  },
-  {
-    id: "inv9",
-    name: "Combustible (diesel)",
-    category: "traslado",
-    sku: "TR-001",
-    quantity: 80,
-    unit: "litros",
-    unitPrice: 1150,
-    minStock: 40,
-    location: "Tanque exterior",
-    supplier: "COPEC",
-    description: "Para flota de vehículos",
-    createdAt: "2026-01-01T00:00:00Z",
-    updatedAt: "2026-06-08T00:00:00Z",
-  },
-  {
-    id: "inv10",
-    name: "Papel membretado A4",
-    category: "documentacion",
-    sku: "DC-001",
-    quantity: 3,
-    unit: "caja",
-    unitPrice: 9500,
-    minStock: 2,
-    location: "Oficina - Estante",
-    supplier: "Comercial ABC",
-    description: "500 hojas por caja, logo impreso",
-    createdAt: "2026-03-01T00:00:00Z",
-    updatedAt: "2026-06-01T00:00:00Z",
-  },
-];
-
 /* ─── KPI card ───────────────────────────────── */
 function KpiCard({
   label,
@@ -259,125 +105,6 @@ function KpiCard({
         </p>
       )}
     </div>
-  );
-}
-
-/* ─── Row ────────────────────────────────────── */
-function ItemRow({
-  item,
-  onEdit,
-  onDelete,
-}: {
-  item: InventoryItem;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const cat = CATEGORY_CFG[item.category];
-  const total = item.quantity * item.unitPrice;
-  const isLow = item.minStock !== undefined && item.quantity <= item.minStock;
-
-  return (
-    <tr className="table-row-veladesk group">
-      {/* nombre + SKU */}
-      <td className="px-4 py-3.5">
-        <div className="flex items-center gap-3">
-          {isLow && (
-            <AlertTriangle size={13} className="shrink-0 text-amber-500" />
-          )}
-          <div>
-            <p className="text-sm font-semibold" style={{ color: "#1E293B" }}>
-              {item.name}
-            </p>
-            {item.sku && (
-              <p
-                className="text-xs font-mono mt-0.5"
-                style={{ color: "#94A3B8" }}
-              >
-                {item.sku}
-              </p>
-            )}
-          </div>
-        </div>
-      </td>
-
-      {/* categoría */}
-      <td className="px-4 py-3.5">
-        <span
-          className="text-xs px-2.5 py-1 rounded-full font-medium"
-          style={{ background: cat.bg, color: cat.color }}
-        >
-          {cat.label}
-        </span>
-      </td>
-
-      {/* cantidad */}
-      <td className="px-4 py-3.5 text-center">
-        <span
-          className={`text-sm font-bold ${isLow ? "text-amber-600" : ""}`}
-          style={isLow ? {} : { color: "#1E293B" }}
-        >
-          {item.quantity.toLocaleString()}
-        </span>
-        <span className="text-xs ml-1" style={{ color: "#94A3B8" }}>
-          {item.unit}
-        </span>
-        {isLow && (
-          <p className="text-xs text-amber-500 mt-0.5">mín. {item.minStock}</p>
-        )}
-      </td>
-
-      {/* precio unitario */}
-      <td className="px-4 py-3.5 text-right">
-        <span className="text-sm" style={{ color: "#374151" }}>
-          {fmt$(item.unitPrice)}
-        </span>
-        <span className="text-xs block" style={{ color: "#94A3B8" }}>
-          / {item.unit}
-        </span>
-      </td>
-
-      {/* valor total */}
-      <td className="px-4 py-3.5 text-right">
-        <span className="text-sm font-bold" style={{ color: "#A07840" }}>
-          {fmt$(total)}
-        </span>
-      </td>
-
-      {/* ubicación */}
-      <td className="px-4 py-3.5 hidden lg:table-cell">
-        <span className="text-xs" style={{ color: "#64748B" }}>
-          {item.location ?? "—"}
-        </span>
-      </td>
-
-      {/* acciones */}
-      <td className="px-4 py-3.5">
-        <div className="flex items-center gap-1.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={onEdit}
-            className="p-1.5 rounded-lg transition-all hover:scale-110"
-            style={{
-              background: "rgba(201,169,110,0.1)",
-              color: "#A07840",
-              border: "1px solid rgba(201,169,110,0.2)",
-            }}
-          >
-            <Pencil size={13} />
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-1.5 rounded-lg transition-all hover:scale-110"
-            style={{
-              background: "rgba(239,68,68,0.08)",
-              color: "#B91C1C",
-              border: "1px solid rgba(239,68,68,0.15)",
-            }}
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
-      </td>
-    </tr>
   );
 }
 
@@ -457,7 +184,7 @@ function ItemForm({
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ background: "rgba(201,169,110,0.15)" }}
               >
-                <DollarSign size={18} style={{ color: "#A07840" }} />
+                <Package size={18} style={{ color: "#A07840" }} />
               </div>
               <div>
                 <p className="text-xs font-medium" style={{ color: "#64748B" }}>
@@ -676,11 +403,39 @@ function ItemForm({
   );
 }
 
+/* ── stock status badge (vista pública sin precios) ── */
+function StockBadge({ item }: { item: InventoryItem }) {
+  if (item.quantity === 0)
+    return (
+      <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-semibold bg-red-100 text-red-700">
+        Sin stock
+      </span>
+    );
+  if (item.minStock !== undefined && item.quantity <= item.minStock)
+    return (
+      <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-semibold bg-amber-100 text-amber-700">
+        Stock bajo ({item.quantity} {item.unit})
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-semibold bg-emerald-100 text-emerald-700">
+      Disponible ({item.quantity} {item.unit})
+    </span>
+  );
+}
+
 /* ══════════════════════════════════════════════
-   MAIN PAGE
+   MAIN PAGE — vista pública (sin precios)
 ══════════════════════════════════════════════ */
 export default function Inventario() {
-  const [items, setItems] = useState<InventoryItem[]>(MOCK_ITEMS);
+  const {
+    inventory,
+    addInventoryItem,
+    updateInventoryItem,
+    deleteInventoryItem,
+  } = useApp();
+  const items = inventory;
+
   const [formOpen, setFormOpen] = useState(false);
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -688,73 +443,50 @@ export default function Inventario() {
   const [filterCat, setFilterCat] = useState<InventoryCategory | "todas">(
     "todas",
   );
-  const [sortBy, setSortBy] = useState<"name" | "total" | "qty">("name");
 
-  /* ── KPIs ── */
   const kpis = useMemo(() => {
-    const totalItems = items.length;
-    const totalValue = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
     const lowStock = items.filter(
       (i) => i.minStock !== undefined && i.quantity <= i.minStock,
     );
+    const outOfStock = items.filter((i) => i.quantity === 0);
     const categories = new Set(items.map((i) => i.category)).size;
-    return { totalItems, totalValue, lowStock: lowStock.length, categories };
+    return {
+      total: items.length,
+      lowStock: lowStock.length,
+      outOfStock: outOfStock.length,
+      categories,
+    };
   }, [items]);
 
-  /* ── filtered & sorted list ── */
-  const filtered = useMemo(() => {
-    return items
-      .filter(
-        (i) =>
-          (filterCat === "todas" || i.category === filterCat) &&
-          (search === "" ||
-            i.name.toLowerCase().includes(search.toLowerCase()) ||
-            (i.sku ?? "").toLowerCase().includes(search.toLowerCase()) ||
-            (i.supplier ?? "").toLowerCase().includes(search.toLowerCase())),
-      )
-      .sort((a, b) => {
-        if (sortBy === "total")
-          return b.quantity * b.unitPrice - a.quantity * a.unitPrice;
-        if (sortBy === "qty") return b.quantity - a.quantity;
-        return a.name.localeCompare(b.name);
-      });
-  }, [items, filterCat, search, sortBy]);
+  const filtered = useMemo(
+    () =>
+      items
+        .filter(
+          (i) =>
+            (filterCat === "todas" || i.category === filterCat) &&
+            (search === "" ||
+              i.name.toLowerCase().includes(search.toLowerCase()) ||
+              (i.sku ?? "").toLowerCase().includes(search.toLowerCase())),
+        )
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [items, filterCat, search],
+  );
 
-  /* ── CRUD ── */
   const handleSave = (item: InventoryItem) => {
-    if (editItem) {
-      setItems((p) => p.map((i) => (i.id === item.id ? item : i)));
-    } else {
-      setItems((p) => [...p, item]);
-    }
+    if (editItem) updateInventoryItem(item);
+    else addInventoryItem(item);
     setFormOpen(false);
     setEditItem(null);
   };
 
   const handleDelete = () => {
-    if (deleteId) setItems((p) => p.filter((i) => i.id !== deleteId));
+    if (deleteId) deleteInventoryItem(deleteId);
     setDeleteId(null);
   };
 
-  const openEdit = (item: InventoryItem) => {
-    setEditItem(item);
-    setFormOpen(true);
-  };
-
-  const openNew = () => {
-    setEditItem(null);
-    setFormOpen(true);
-  };
-
-  /* ── total visible ── */
-  const visibleTotal = filtered.reduce(
-    (s, i) => s + i.quantity * i.unitPrice,
-    0,
-  );
-
   return (
     <div className="p-8 space-y-6">
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4 animate-fade-in">
         <div>
           <p
@@ -767,11 +499,14 @@ export default function Inventario() {
             Inventario
           </h1>
           <p className="text-sm mt-1" style={{ color: "#64748B" }}>
-            {items.length} ítems registrados · {kpis.categories} categorías
+            {items.length} ítems · {kpis.categories} categorías
           </p>
         </div>
         <button
-          onClick={openNew}
+          onClick={() => {
+            setEditItem(null);
+            setFormOpen(true);
+          }}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm btn-gold"
         >
           <span className="relative z-10 flex items-center gap-2">
@@ -780,40 +515,40 @@ export default function Inventario() {
         </button>
       </div>
 
-      {/* ── KPIs ── */}
+      {/* KPIs — sin precios */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           label="Total de ítems"
-          value={String(kpis.totalItems)}
+          value={String(kpis.total)}
           icon={Package}
           color="#0A1628"
           sub={`${kpis.categories} categorías`}
         />
         <KpiCard
-          label="Valor total en stock"
-          value={fmt$(kpis.totalValue)}
-          icon={DollarSign}
-          color="#A07840"
-          sub="cantidad × precio"
+          label="Con stock disponible"
+          value={String(kpis.total - kpis.outOfStock)}
+          icon={Layers}
+          color="#047857"
+          sub="ítems con existencias"
         />
         <KpiCard
-          label="Categorías activas"
-          value={String(kpis.categories)}
-          icon={Layers}
-          color="#1D4ED8"
+          label="Sin stock"
+          value={String(kpis.outOfStock)}
+          icon={AlertTriangle}
+          color={kpis.outOfStock > 0 ? "#B91C1C" : "#047857"}
+          sub={kpis.outOfStock > 0 ? "requieren reposición" : "todo en orden"}
         />
         <KpiCard
           label="Stock bajo mínimo"
           value={String(kpis.lowStock)}
           icon={TrendingDown}
-          color={kpis.lowStock > 0 ? "#B91C1C" : "#047857"}
-          sub={kpis.lowStock > 0 ? "requieren reposición" : "todo en orden"}
+          color={kpis.lowStock > 0 ? "#D97706" : "#047857"}
+          sub={kpis.lowStock > 0 ? "revisar existencias" : "niveles correctos"}
         />
       </div>
 
-      {/* ── Filters ── */}
+      {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
-        {/* search */}
         <div className="relative flex-1 min-w-[200px]">
           <Search
             size={14}
@@ -822,12 +557,10 @@ export default function Inventario() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre, código o proveedor…"
+            placeholder="Buscar por nombre o código…"
             className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl input-veladesk"
           />
         </div>
-
-        {/* category filter */}
         <select
           value={filterCat}
           onChange={(e) =>
@@ -847,48 +580,20 @@ export default function Inventario() {
             </option>
           ))}
         </select>
-
-        {/* sort */}
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          className="text-sm rounded-xl px-3 py-2.5 input-veladesk"
-        >
-          <option value="name">Ordenar: Nombre</option>
-          <option value="total">Ordenar: Mayor valor</option>
-          <option value="qty">Ordenar: Mayor cantidad</option>
-        </select>
       </div>
 
-      {/* ── Table ── */}
+      {/* Table — sin columnas de precio */}
       <div className="glass-card rounded-2xl overflow-hidden">
-        {/* table header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div className="px-5 py-4 border-b border-slate-100">
           <p className="text-sm font-semibold" style={{ color: "#0A1628" }}>
             {filtered.length} ítem{filtered.length !== 1 ? "s" : ""}
             {search || filterCat !== "todas" ? " (filtrados)" : ""}
           </p>
-          <div
-            className="flex items-center gap-2 text-sm"
-            style={{ color: "#64748B" }}
-          >
-            <span>Valor visible:</span>
-            <span className="font-bold" style={{ color: "#A07840" }}>
-              {fmt$(visibleTotal)}
-            </span>
-          </div>
         </div>
-
         {filtered.length === 0 ? (
           <div className="text-center py-16">
             <Package size={32} className="mx-auto mb-3 text-slate-200" />
             <p className="text-sm font-medium text-slate-400">Sin ítems</p>
-            <button
-              onClick={openNew}
-              className="mt-3 text-sm font-medium px-4 py-2 rounded-xl btn-navy"
-            >
-              Agregar primer insumo
-            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -903,9 +608,7 @@ export default function Inventario() {
                   {[
                     "Insumo / Producto",
                     "Categoría",
-                    "Cantidad",
-                    "Precio unitario",
-                    "Valor en stock",
+                    "Disponibilidad",
                     "Ubicación",
                     "",
                   ].map((h) => (
@@ -920,47 +623,67 @@ export default function Inventario() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((item) => (
-                  <ItemRow
-                    key={item.id}
-                    item={item}
-                    onEdit={() => openEdit(item)}
-                    onDelete={() => setDeleteId(item.id)}
-                  />
-                ))}
-              </tbody>
-              {/* totals row */}
-              <tfoot>
-                <tr
-                  style={{
-                    background: "#F8FAFC",
-                    borderTop: "2px solid #E2E8F0",
-                  }}
-                >
-                  <td
-                    colSpan={4}
-                    className="px-4 py-3 text-sm font-semibold"
-                    style={{ color: "#0A1628" }}
-                  >
-                    Total en stock
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span
-                      className="text-base font-bold"
-                      style={{ color: "#A07840" }}
+                {filtered.map((item) => {
+                  const cfg = CATEGORY_CFG[item.category];
+                  return (
+                    <tr
+                      key={item.id}
+                      className="border-b border-slate-50 hover:bg-slate-50/60 transition-colors"
                     >
-                      {fmt$(visibleTotal)}
-                    </span>
-                  </td>
-                  <td colSpan={2} />
-                </tr>
-              </tfoot>
+                      <td className="px-4 py-3">
+                        <p
+                          className="text-sm font-semibold"
+                          style={{ color: "#0A1628" }}
+                        >
+                          {item.name}
+                        </p>
+                        {item.sku && (
+                          <p className="text-xs text-slate-400">{item.sku}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="text-xs px-2 py-1 rounded-full font-medium"
+                          style={{ color: cfg.color, background: cfg.bg }}
+                        >
+                          {cfg.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StockBadge item={item} />
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 text-sm">
+                        {item.location || "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1 justify-end">
+                          <button
+                            onClick={() => {
+                              setEditItem(item);
+                              setFormOpen(true);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(item.id)}
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* ── Low stock alerts ── */}
+      {/* Low stock alerts */}
       {kpis.lowStock > 0 && (
         <div
           className="rounded-2xl p-5 animate-slide-up"
@@ -981,7 +704,10 @@ export default function Inventario() {
                 <div
                   key={i.id}
                   className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white border border-amber-100 cursor-pointer hover:border-amber-200 transition-colors"
-                  onClick={() => openEdit(i)}
+                  onClick={() => {
+                    setEditItem(i);
+                    setFormOpen(true);
+                  }}
                 >
                   <div>
                     <p
@@ -1001,7 +727,7 @@ export default function Inventario() {
         </div>
       )}
 
-      {/* ── Delete confirm ── */}
+      {/* Delete confirm */}
       {deleteId && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -1026,7 +752,7 @@ export default function Inventario() {
               <strong style={{ color: "#1E293B" }}>
                 {items.find((i) => i.id === deleteId)?.name}
               </strong>{" "}
-              se eliminará permanentemente del inventario.
+              se eliminará permanentemente.
             </p>
             <div className="flex gap-3">
               <button
@@ -1037,7 +763,7 @@ export default function Inventario() {
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
                 style={{
                   background: "linear-gradient(135deg,#EF4444,#DC2626)",
                 }}
@@ -1049,7 +775,6 @@ export default function Inventario() {
         </div>
       )}
 
-      {/* ── Form panel ── */}
       {formOpen && (
         <ItemForm
           initial={editItem ?? undefined}

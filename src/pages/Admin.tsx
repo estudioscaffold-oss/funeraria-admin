@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import {
   Plus,
@@ -25,9 +24,16 @@ import {
   Package,
   ListChecks,
   Search,
-  ExternalLink,
 } from "lucide-react";
-import type { AppUser, Convenio, CatalogItem, UserRole } from "../types";
+import type {
+  AppUser,
+  Convenio,
+  CatalogItem,
+  UserRole,
+  InventoryItem,
+  InventoryCategory,
+  Sucursal,
+} from "../types";
 
 /* ── tipos locales ───────────────────────────────── */
 interface Proveedor {
@@ -1872,6 +1878,9 @@ function TabPerfil() {
         </div>
       </section>
 
+      {/* ── Sucursales ── */}
+      <SucursalesSection />
+
       {/* ── Guardar ── */}
       <div className="flex items-center gap-3 pt-2">
         <button
@@ -1898,6 +1907,275 @@ function TabPerfil() {
         )}
       </div>
     </div>
+  );
+}
+
+/* ─── Sucursales (dentro de Perfil) ───────────────── */
+function SucursalesSection() {
+  const { sucursales, addSucursal, updateSucursal, deleteSucursal } = useApp();
+  const [editing, setEditing] = useState<Sucursal | "new" | null>(null);
+
+  const empty = (): Sucursal => ({
+    id: crypto.randomUUID(),
+    name: "",
+    address: "",
+    city: "",
+    phone: "",
+    email: "",
+    managerName: "",
+    managerPhone: "",
+    active: true,
+    createdAt: new Date().toISOString(),
+  });
+  const [form, setForm] = useState<Sucursal>(empty());
+  const sf = (k: keyof Sucursal, v: unknown) =>
+    setForm((p) => ({ ...p, [k]: v }));
+
+  const handleSave = () => {
+    if (!form.name.trim()) return;
+    if (editing === "new") addSucursal(form);
+    else updateSucursal(form.id, form);
+    setEditing(null);
+  };
+
+  const inputCls2 =
+    "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-400 bg-white";
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Building2 size={15} style={{ color: "#C9A96E" }} />
+          <h3
+            className="text-sm font-bold uppercase tracking-widest"
+            style={{ color: "#0A1628" }}
+          >
+            Sucursales
+          </h3>
+        </div>
+        <button
+          onClick={() => {
+            setForm(empty());
+            setEditing("new");
+          }}
+          className="flex items-center gap-2 text-white px-3 py-1.5 rounded-lg text-xs font-medium bg-navy-900 hover:bg-navy-800 transition-colors"
+        >
+          <Plus size={13} /> Nueva sucursal
+        </button>
+      </div>
+
+      {editing !== null && (
+        <div className="bg-white rounded-xl border border-gold-200 shadow-md p-5 mb-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-slate-800 text-sm">
+              {editing === "new"
+                ? "Nueva sucursal"
+                : `Editando: ${(editing as Sucursal).name}`}
+            </h4>
+            <button
+              onClick={() => setEditing(null)}
+              className="p-1.5 hover:bg-slate-100 rounded-lg"
+            >
+              <X size={15} className="text-slate-400" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Nombre de la sucursal *
+              </label>
+              <input
+                className={inputCls2}
+                value={form.name}
+                onChange={(e) => sf("name", e.target.value)}
+                placeholder="Ej: Casa Central, Sucursal Norte…"
+                autoFocus
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Dirección
+              </label>
+              <input
+                className={inputCls2}
+                value={form.address ?? ""}
+                onChange={(e) => sf("address", e.target.value)}
+                placeholder="Av. Principal 1234"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Ciudad / Comuna
+              </label>
+              <input
+                className={inputCls2}
+                value={form.city ?? ""}
+                onChange={(e) => sf("city", e.target.value)}
+                placeholder="Santiago"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Teléfono
+              </label>
+              <input
+                className={inputCls2}
+                value={form.phone ?? ""}
+                onChange={(e) => sf("phone", e.target.value)}
+                placeholder="+56 2 2345 6789"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Correo
+              </label>
+              <input
+                type="email"
+                className={inputCls2}
+                value={form.email ?? ""}
+                onChange={(e) => sf("email", e.target.value)}
+                placeholder="sucursal@empresa.cl"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Encargado
+              </label>
+              <input
+                className={inputCls2}
+                value={form.managerName ?? ""}
+                onChange={(e) => sf("managerName", e.target.value)}
+                placeholder="Nombre del encargado"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Teléfono encargado
+              </label>
+              <input
+                className={inputCls2}
+                value={form.managerPhone ?? ""}
+                onChange={(e) => sf("managerPhone", e.target.value)}
+                placeholder="+56 9 8765 4321"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="suc-active"
+                checked={form.active}
+                onChange={(e) => sf("active", e.target.checked)}
+                className="w-4 h-4 accent-indigo-600"
+              />
+              <label htmlFor="suc-active" className="text-sm text-slate-600">
+                Sucursal activa
+              </label>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              onClick={() => setEditing(null)}
+              className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
+            >
+              <Check size={14} /> Guardar
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm divide-y divide-slate-100">
+        {sucursales.length === 0 && (
+          <p className="px-5 py-6 text-center text-slate-400 text-sm">
+            Sin sucursales registradas
+          </p>
+        )}
+        {sucursales.map((s) => (
+          <div
+            key={s.id}
+            className="flex items-start justify-between px-5 py-3.5 hover:bg-slate-50/70 transition-colors group"
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                style={{ background: "rgba(201,169,110,0.1)" }}
+              >
+                <Building2 size={14} style={{ color: "#A07840" }} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-slate-800 text-sm">
+                    {s.name}
+                  </p>
+                  <span
+                    className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${s.active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}
+                  >
+                    {s.active ? "Activa" : "Inactiva"}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
+                  {s.address && (
+                    <p className="text-xs text-slate-500">
+                      <MapPin size={10} className="inline mr-0.5" />
+                      {s.address}
+                      {s.city ? `, ${s.city}` : ""}
+                    </p>
+                  )}
+                  {s.phone && (
+                    <p className="text-xs text-slate-500">
+                      <Phone size={10} className="inline mr-0.5" />
+                      {s.phone}
+                    </p>
+                  )}
+                  {s.email && (
+                    <p className="text-xs text-slate-500">
+                      <Mail size={10} className="inline mr-0.5" />
+                      {s.email}
+                    </p>
+                  )}
+                  {s.managerName && (
+                    <p className="text-xs text-slate-500">
+                      <Users size={10} className="inline mr-0.5" />
+                      {s.managerName}
+                      {s.managerPhone ? ` · ${s.managerPhone}` : ""}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-3">
+              <button
+                onClick={() => {
+                  setForm({ ...s });
+                  setEditing(s);
+                }}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gold-200 text-navy-900 hover:bg-navy-900 hover:text-white transition-all"
+              >
+                <Edit size={12} /> Editar
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm(`¿Eliminar la sucursal "${s.name}"?`))
+                    deleteSucursal(s.id);
+                }}
+                className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-slate-400 mt-2">
+        💡 Las sucursales activas aparecen en los desplegables de nuevas fichas,
+        presupuestos y otros formularios.
+      </p>
+    </section>
   );
 }
 
@@ -2222,31 +2500,753 @@ function TabProveedores() {
 /* ════════════════════════════════════════════════════
    INVENTARIO — enlace al módulo
    ════════════════════════════════════════════════════ */
-function TabInventario() {
-  const navigate = useNavigate();
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  crear: "Creado",
+  editar: "Editado",
+  eliminar: "Eliminado",
+  entrada: "Entrada de stock",
+  salida: "Salida de stock",
+  ajuste: "Ajuste de stock",
+};
+const AUDIT_ACTION_COLORS: Record<string, string> = {
+  crear: "bg-emerald-100 text-emerald-700",
+  editar: "bg-blue-100 text-blue-700",
+  eliminar: "bg-red-100 text-red-700",
+  entrada: "bg-teal-100 text-teal-700",
+  salida: "bg-orange-100 text-orange-700",
+  ajuste: "bg-purple-100 text-purple-700",
+};
+
+/* ── Formulario de inventario (Admin) ────────────── */
+const INV_CATEGORIES: { value: InventoryCategory; label: string }[] = [
+  { value: "ataudes_urnas", label: "Ataúdes y Urnas" },
+  { value: "preparacion", label: "Preparación" },
+  { value: "velatorio", label: "Velatorio" },
+  { value: "traslado", label: "Traslado" },
+  { value: "ceremonia", label: "Ceremonia" },
+  { value: "documentacion", label: "Documentación" },
+  { value: "limpieza", label: "Limpieza" },
+  { value: "oficina", label: "Oficina" },
+  { value: "otro", label: "Otro" },
+];
+const INV_UNITS = [
+  "unidad",
+  "caja",
+  "kg",
+  "litros",
+  "metros",
+  "pares",
+  "set",
+  "rollo",
+  "bolsa",
+  "frasco",
+];
+
+function InventarioFormModal({
+  initial,
+  onSave,
+  onClose,
+}: {
+  initial?: InventoryItem;
+  onSave: (item: InventoryItem) => void;
+  onClose: () => void;
+}) {
+  const empty: InventoryItem = {
+    id: crypto.randomUUID(),
+    name: "",
+    category: "ataudes_urnas",
+    sku: "",
+    quantity: 1,
+    unit: "unidad",
+    unitPrice: 0,
+    description: "",
+    minStock: undefined,
+    location: "",
+    supplier: "",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  const [form, setForm] = useState<InventoryItem>(initial ?? empty);
+  const set = <K extends keyof InventoryItem>(k: K, v: InventoryItem[K]) =>
+    setForm((p) => ({ ...p, [k]: v }));
+
   return (
-    <div className="max-w-xl mx-auto mt-10 text-center space-y-4">
-      <div
-        className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
-        style={{ background: "rgba(201,169,110,0.12)" }}
-      >
-        <Package size={28} style={{ color: "#A07840" }} />
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <h3 className="font-semibold text-slate-800">
+            {initial ? "Editar insumo" : "Nuevo insumo"}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-slate-200 rounded-lg"
+          >
+            <X size={16} className="text-slate-400" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Nombre *
+              </label>
+              <input
+                className={inputCls}
+                value={form.name}
+                onChange={(e) => set("name", e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Categoría
+              </label>
+              <select
+                className={inputCls}
+                value={form.category}
+                onChange={(e) =>
+                  set("category", e.target.value as InventoryCategory)
+                }
+              >
+                {INV_CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                SKU / Código
+              </label>
+              <input
+                className={inputCls}
+                value={form.sku ?? ""}
+                onChange={(e) => set("sku", e.target.value)}
+                placeholder="AT-001"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Cantidad
+              </label>
+              <input
+                type="number"
+                min={0}
+                className={inputCls}
+                value={form.quantity}
+                onChange={(e) => set("quantity", +e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Unidad
+              </label>
+              <select
+                className={inputCls}
+                value={form.unit}
+                onChange={(e) => set("unit", e.target.value)}
+              >
+                {INV_UNITS.map((u) => (
+                  <option key={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Precio unitario (CLP)
+              </label>
+              <input
+                type="number"
+                min={0}
+                className={inputCls}
+                value={form.unitPrice}
+                onChange={(e) => set("unitPrice", +e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Stock mínimo alerta
+              </label>
+              <input
+                type="number"
+                min={0}
+                className={inputCls}
+                value={form.minStock ?? ""}
+                onChange={(e) =>
+                  set("minStock", e.target.value ? +e.target.value : undefined)
+                }
+                placeholder="Ej: 5"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Ubicación en bodega
+              </label>
+              <input
+                className={inputCls}
+                value={form.location ?? ""}
+                onChange={(e) => set("location", e.target.value)}
+                placeholder="Bodega A, Estante 2"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Proveedor
+              </label>
+              <input
+                className={inputCls}
+                value={form.supplier ?? ""}
+                onChange={(e) => set("supplier", e.target.value)}
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600 block mb-1">
+                Descripción / Observaciones
+              </label>
+              <textarea
+                rows={2}
+                className={inputCls + " resize-none"}
+                value={form.description ?? ""}
+                onChange={(e) => set("description", e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-white"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => {
+              if (!form.name.trim()) return;
+              onSave({ ...form, updatedAt: new Date().toISOString() });
+            }}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
+          >
+            <Check size={14} /> {initial ? "Guardar cambios" : "Agregar insumo"}
+          </button>
+        </div>
       </div>
-      <h2 className="text-xl font-bold text-slate-800">
-        Gestión de Inventario
-      </h2>
-      <p className="text-slate-500 text-sm">
-        El inventario tiene su propio módulo con CRUD completo, control de stock
-        mínimo, categorías, ubicación y valor unitario por ítem.
-      </p>
-      <button
-        onClick={() => navigate("/inventario")}
-        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm btn-gold"
-      >
-        <span className="relative z-10 flex items-center gap-2">
-          <ExternalLink size={15} /> Ir al módulo de Inventario
-        </span>
-      </button>
+    </div>
+  );
+}
+
+function TabInventario() {
+  const {
+    inventory,
+    inventoryLog,
+    addInventoryItem,
+    updateInventoryItem,
+    deleteInventoryItem,
+    adjustInventoryStock,
+  } = useApp();
+
+  const [subTab, setSubTab] = useState<"auditor" | "inventario">("inventario");
+  const [formOpen, setFormOpen] = useState(false);
+  const [editItem, setEditItem] = useState<
+    import("../types").InventoryItem | null
+  >(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [logSearch, setLogSearch] = useState("");
+  const [adjustId, setAdjustId] = useState<string | null>(null);
+  const [adjustQty, setAdjustQty] = useState(0);
+  const [adjustNotes, setAdjustNotes] = useState("");
+
+  const fmt$ = (n: number) =>
+    `$${n.toLocaleString("es-CL", { minimumFractionDigits: 0 })}`;
+
+  const totalValue = inventory.reduce(
+    (s, i) => s + i.quantity * i.unitPrice,
+    0,
+  );
+  const lowStock = inventory.filter(
+    (i) => i.minStock !== undefined && i.quantity <= i.minStock,
+  ).length;
+
+  const filteredItems = inventory.filter(
+    (i) =>
+      i.name.toLowerCase().includes(search.toLowerCase()) ||
+      (i.sku ?? "").toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const filteredLog = inventoryLog.filter(
+    (e) =>
+      e.itemName.toLowerCase().includes(logSearch.toLowerCase()) ||
+      AUDIT_ACTION_LABELS[e.action]
+        ?.toLowerCase()
+        .includes(logSearch.toLowerCase()),
+  );
+
+  /* ── helpers para formulario inline ── */
+  const CATEGORY_LABELS: Record<string, string> = {
+    ataudes_urnas: "Ataúdes y Urnas",
+    preparacion: "Preparación",
+    velatorio: "Velatorio",
+    traslado: "Traslado",
+    ceremonia: "Ceremonia",
+    documentacion: "Documentación",
+    limpieza: "Limpieza",
+    oficina: "Oficina",
+    otro: "Otro",
+  };
+
+  const handleSaveItem = (item: import("../types").InventoryItem) => {
+    if (editItem) updateInventoryItem(item);
+    else addInventoryItem(item);
+    setFormOpen(false);
+    setEditItem(null);
+  };
+
+  const handleDelete = () => {
+    if (deleteId) deleteInventoryItem(deleteId);
+    setDeleteId(null);
+  };
+
+  const handleAdjust = () => {
+    if (!adjustId) return;
+    adjustInventoryStock(
+      adjustId,
+      adjustQty,
+      "ajuste",
+      adjustNotes || undefined,
+    );
+    setAdjustId(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* sub-tabs */}
+      <div className="flex gap-1 border-b border-slate-200 -mt-1 mb-4">
+        {[
+          { id: "inventario", label: "Inventario completo", icon: Package },
+          { id: "auditor", label: "Auditor de movimientos", icon: ListChecks },
+        ].map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setSubTab(id as "auditor" | "inventario")}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              subTab === id
+                ? "border-indigo-600 text-indigo-700"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            <Icon size={14} /> {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── INVENTARIO COMPLETO (con precios — solo admin) ── */}
+      {subTab === "inventario" && (
+        <div className="space-y-4">
+          {/* KPIs */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">
+                Total ítems
+              </p>
+              <p className="text-2xl font-bold text-slate-800">
+                {inventory.length}
+              </p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">
+                Valor total en stock
+              </p>
+              <p className="text-2xl font-bold" style={{ color: "#A07840" }}>
+                {fmt$(totalValue)}
+              </p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">
+                Stock bajo mínimo
+              </p>
+              <p
+                className={`text-2xl font-bold ${lowStock > 0 ? "text-red-600" : "text-emerald-600"}`}
+              >
+                {lowStock}
+              </p>
+            </div>
+          </div>
+
+          {/* toolbar */}
+          <div className="flex items-center gap-3 justify-between">
+            <div className="relative flex-1 max-w-xs">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                className={inputCls + " pl-8"}
+                placeholder="Buscar ítem…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button
+              onClick={() => {
+                setEditItem(null);
+                setFormOpen(true);
+              }}
+              className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 hover:bg-navy-800 transition-colors shadow-sm"
+            >
+              <Plus size={15} /> Nuevo insumo
+            </button>
+          </div>
+
+          {/* tabla con precios */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  {[
+                    "Insumo",
+                    "Categoría",
+                    "Cantidad",
+                    "Precio unitario",
+                    "Valor en stock",
+                    "Mín. stock",
+                    "",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredItems.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-10 text-center text-slate-400"
+                    >
+                      Sin ítems
+                    </td>
+                  </tr>
+                )}
+                {filteredItems.map((item) => {
+                  const isLow =
+                    item.minStock !== undefined &&
+                    item.quantity <= item.minStock;
+                  return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-slate-50/70 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-slate-800">
+                          {item.name}
+                        </p>
+                        {item.sku && (
+                          <p className="text-xs text-slate-400">{item.sku}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-500">
+                        {CATEGORY_LABELS[item.category] ?? item.category}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`font-bold ${isLow ? "text-red-600" : "text-slate-700"}`}
+                        >
+                          {item.quantity} {item.unit}
+                        </span>
+                        {isLow && (
+                          <span className="ml-1 text-xs text-red-500">⚠</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums text-slate-600">
+                        {fmt$(item.unitPrice)}
+                      </td>
+                      <td
+                        className="px-4 py-3 font-semibold tabular-nums"
+                        style={{ color: "#A07840" }}
+                      >
+                        {fmt$(item.quantity * item.unitPrice)}
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 text-xs">
+                        {item.minStock ?? "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setAdjustId(item.id);
+                              setAdjustQty(item.quantity);
+                              setAdjustNotes("");
+                            }}
+                            className="text-xs px-2 py-1 rounded border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors"
+                          >
+                            Ajustar
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditItem(item);
+                              setFormOpen(true);
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gold-200 text-navy-900 hover:bg-navy-900 hover:text-white transition-all"
+                          >
+                            <Edit size={12} /> Editar
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(item.id)}
+                            className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              {filteredItems.length > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 border-slate-200 bg-slate-50">
+                    <td
+                      colSpan={4}
+                      className="px-4 py-3 text-sm font-bold text-slate-700"
+                    >
+                      Total valor en stock
+                    </td>
+                    <td
+                      className="px-4 py-3 font-bold text-base tabular-nums"
+                      style={{ color: "#A07840" }}
+                    >
+                      {fmt$(
+                        filteredItems.reduce(
+                          (s, i) => s + i.quantity * i.unitPrice,
+                          0,
+                        ),
+                      )}
+                    </td>
+                    <td colSpan={2} />
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+
+          {/* modal ajuste de stock */}
+          {adjustId &&
+            (() => {
+              const item = inventory.find((i) => i.id === adjustId);
+              return item ? (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                  style={{ background: "rgba(0,0,0,0.4)" }}
+                >
+                  <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-slate-200 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-slate-800">
+                        Ajustar stock — {item.name}
+                      </h3>
+                      <button
+                        onClick={() => setAdjustId(null)}
+                        className="p-1.5 hover:bg-slate-100 rounded-lg"
+                      >
+                        <X size={16} className="text-slate-400" />
+                      </button>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 block mb-1">
+                        Nueva cantidad ({item.unit})
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        className={inputCls}
+                        value={adjustQty}
+                        onChange={(e) => setAdjustQty(+e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 block mb-1">
+                        Motivo del ajuste
+                      </label>
+                      <input
+                        className={inputCls}
+                        value={adjustNotes}
+                        onChange={(e) => setAdjustNotes(e.target.value)}
+                        placeholder="Ej: venta, pérdida, reposición…"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        onClick={() => setAdjustId(null)}
+                        className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleAdjust}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
+                      >
+                        <Check size={14} /> Guardar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
+          {/* modal eliminar */}
+          {deleteId && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: "rgba(0,0,0,0.4)" }}
+            >
+              <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-red-100 space-y-4">
+                <h3 className="font-semibold text-slate-800">
+                  ¿Eliminar "{inventory.find((i) => i.id === deleteId)?.name}"?
+                </h3>
+                <p className="text-sm text-slate-500">
+                  Esta acción quedará registrada en el auditor de movimientos.
+                </p>
+                <div className="flex gap-3 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={() => setDeleteId(null)}
+                    className="flex-1 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="flex-1 py-2 text-sm text-white rounded-lg font-medium"
+                    style={{
+                      background: "linear-gradient(135deg,#EF4444,#DC2626)",
+                    }}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── AUDITOR DE MOVIMIENTOS ── */}
+      {subTab === "auditor" && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 justify-between">
+            <div className="relative flex-1 max-w-xs">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                className={inputCls + " pl-8"}
+                placeholder="Buscar por ítem o acción…"
+                value={logSearch}
+                onChange={(e) => setLogSearch(e.target.value)}
+              />
+            </div>
+            <p className="text-sm text-slate-500">
+              {inventoryLog.length} movimientos registrados
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  {[
+                    "Fecha / Hora",
+                    "Ítem",
+                    "Acción",
+                    "Antes",
+                    "Después",
+                    "Notas",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left px-4 py-3 font-semibold text-slate-500 text-xs uppercase tracking-wide"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredLog.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-10 text-center text-slate-400"
+                    >
+                      {inventoryLog.length === 0
+                        ? "Sin movimientos registrados aún"
+                        : "Sin resultados para la búsqueda"}
+                    </td>
+                  </tr>
+                )}
+                {filteredLog.map((entry) => (
+                  <tr
+                    key={entry.id}
+                    className="hover:bg-slate-50/70 transition-colors"
+                  >
+                    <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                      {new Date(entry.date).toLocaleDateString("es-CL")}{" "}
+                      <span className="text-slate-400">
+                        {new Date(entry.date).toLocaleTimeString("es-CL", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-800">
+                      {entry.itemName}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full font-semibold ${AUDIT_ACTION_COLORS[entry.action] ?? "bg-slate-100 text-slate-600"}`}
+                      >
+                        {AUDIT_ACTION_LABELS[entry.action] ?? entry.action}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 text-sm tabular-nums">
+                      {entry.quantityBefore !== undefined
+                        ? entry.quantityBefore
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700 text-sm font-medium tabular-nums">
+                      {entry.quantityAfter !== undefined
+                        ? entry.quantityAfter
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500 text-xs max-w-[200px] truncate">
+                      {entry.notes || "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* form de inventario */}
+      {formOpen && (
+        <InventarioFormModal
+          initial={editItem ?? undefined}
+          onSave={handleSaveItem}
+          onClose={() => {
+            setFormOpen(false);
+            setEditItem(null);
+          }}
+        />
+      )}
     </div>
   );
 }
