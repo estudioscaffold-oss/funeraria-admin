@@ -128,10 +128,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     IS_ONLINE ? [] : mockConvenios,
   );
   const [catalog, setCatalog] = useState<CatalogCategory[]>(() => {
-    // Siempre intentar cargar desde localStorage primero
+    // Cargar desde localStorage primero
     const saved = lsLoad<CatalogCategory[]>("veladesk-catalog", []);
     if (saved.length > 0) return saved;
-    return IS_ONLINE ? [] : mockCatalog;
+    // Primera carga: usar mockCatalog y guardarlo en localStorage como semilla inicial
+    if (!IS_ONLINE) {
+      lsSave("veladesk-catalog", mockCatalog);
+      return mockCatalog;
+    }
+    return [];
   });
 
   /* inventory + audit — always localStorage */
