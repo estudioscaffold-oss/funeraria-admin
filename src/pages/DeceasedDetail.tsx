@@ -825,11 +825,34 @@ function BudgetForm({
             </p>
             <button
               onClick={addRow}
-              className="flex items-center gap-1 text-xs text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 font-medium transition-colors"
+              disabled={catalog.length === 0}
+              className="flex items-center gap-1 text-xs text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200 font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Plus size={12} /> Agregar ítem
             </button>
           </div>
+
+          {catalog.length === 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 mb-3 flex items-start gap-2.5">
+              <AlertTriangle
+                size={15}
+                className="text-amber-500 shrink-0 mt-0.5"
+              />
+              <div>
+                <p className="text-xs font-semibold text-amber-800">
+                  No hay categorías ni servicios configurados
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Ve a{" "}
+                  <span className="font-semibold">
+                    Administrador → Servicios
+                  </span>{" "}
+                  para agregar categorías e ítems. Una vez creados, aparecerán
+                  aquí automáticamente.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="border border-slate-200 rounded-xl overflow-hidden">
             <table className="w-full text-sm">

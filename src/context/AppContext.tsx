@@ -127,9 +127,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [convenios, setConvenios] = useState<Convenio[]>(
     IS_ONLINE ? [] : mockConvenios,
   );
-  const [catalog, setCatalog] = useState<CatalogCategory[]>(
-    IS_ONLINE ? [] : mockCatalog,
-  );
+  const [catalog, setCatalog] = useState<CatalogCategory[]>(() => {
+    // Siempre intentar cargar desde localStorage primero
+    const saved = lsLoad<CatalogCategory[]>("veladesk-catalog", []);
+    if (saved.length > 0) return saved;
+    return IS_ONLINE ? [] : mockCatalog;
+  });
 
   /* inventory + audit — always localStorage */
   const [inventory, setInventory] = useState<InventoryItem[]>(() =>
@@ -247,7 +250,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setServices(svc);
         setUsers(usr);
         setConvenios(conv);
-        setCatalog(cat.length ? cat : mockCatalog);
+        const finalCatalog = cat.length ? cat : mockCatalog;
+        setCatalog(finalCatalog);
+        // respaldar en localStorage para funcionar offline después
+        lsSave("veladesk-catalog", finalCatalog);
         setLoading(false);
       } catch (e) {
         console.error("Supabase load error:", e);
@@ -461,6 +467,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   /* ── catalog ── */
   const saveCatalog = (next: CatalogCategory[]) => {
     setCatalog(next);
+    lsSave("veladesk-catalog", next); // persistir SIEMPRE en localStorage
     if (IS_ONLINE) {
       next.forEach((c, i) =>
         dbCatalog
