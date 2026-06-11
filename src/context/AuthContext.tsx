@@ -104,7 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     fullName: string,
   ): Promise<string | null> => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
     if (error) return error.message;
     if (!data.user) return "No se pudo crear el usuario";
 

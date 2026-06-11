@@ -15,7 +15,11 @@ export async function createAuthUser(
   email: string,
   password: string,
 ): Promise<{ userId: string | null; error: string | null }> {
-  const { data, error } = await ghostClient.auth.signUp({ email, password });
+  const { data, error } = await ghostClient.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: window.location.origin },
+  });
   if (error) return { userId: null, error: error.message };
   return { userId: data.user?.id ?? null, error: null };
 }
