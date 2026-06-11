@@ -679,7 +679,7 @@ export const mockUsers: AppUser[] = [
     fullName: "Roberto Silva",
     email: "roberto.silva@funeraria.cl",
     phone: "+56 9 6543 2109",
-    role: "operario",
+    role: "equipo_tecnico",
     sucursal: "Casa Central",
     active: true,
     createdAt: "2025-03-01T08:00:00Z",
@@ -689,7 +689,7 @@ export const mockUsers: AppUser[] = [
     fullName: "Patricia Morales",
     email: "patricia.morales@funeraria.cl",
     phone: "+56 9 5432 1098",
-    role: "recepcion",
+    role: "administrador",
     sucursal: "Sucursal Sur",
     active: true,
     createdAt: "2025-04-20T08:00:00Z",
@@ -748,15 +748,17 @@ export const mockConvenios: Convenio[] = [
 ];
 
 export const USER_ROLE_LABELS: Record<string, string> = {
+  maestro: "Maestro",
   administrador: "Administrador",
   vendedor: "Vendedor",
-  operario: "Operario",
-  recepcion: "Recepción",
+  equipo_tecnico: "Equipo Técnico",
+  familia: "Familia",
 };
 
 export const USER_ROLE_COLORS: Record<string, string> = {
+  maestro: "bg-yellow-100 text-yellow-800",
   administrador: "bg-purple-100 text-purple-700",
   vendedor: "bg-blue-100 text-blue-700",
-  operario: "bg-amber-100 text-amber-700",
-  recepcion: "bg-emerald-100 text-emerald-700",
+  equipo_tecnico: "bg-amber-100 text-amber-700",
+  familia: "bg-emerald-100 text-emerald-700",
 };

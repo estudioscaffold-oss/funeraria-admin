@@ -12,7 +12,10 @@ import {
   Lock,
   Package,
   ContactRound,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { USER_ROLE_LABELS } from "../../utils/mockData";
 
 const NAV = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard", mock: false },
@@ -298,7 +301,11 @@ export default function Sidebar() {
             <VelodeskLogo />
           </div>
         )}
-        <div className="flex items-center gap-2 px-2">
+
+        {/* Usuario actual + cerrar sesión */}
+        <UserFooter />
+
+        <div className="flex items-center gap-2 px-2 mt-3">
           <div
             className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"
             style={{ boxShadow: "0 0 6px rgba(52,211,153,0.7)" }}
@@ -315,5 +322,44 @@ export default function Sidebar() {
         </p>
       </div>
     </aside>
+  );
+}
+
+function UserFooter() {
+  const { authUser, logout } = useAuth();
+  if (!authUser) return null;
+  return (
+    <div
+      className="flex items-center gap-2 px-2 py-2 rounded-xl mb-1 group"
+      style={{ background: "rgba(255,255,255,0.04)" }}
+    >
+      <div
+        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+        style={{ background: "rgba(201,169,110,0.2)", color: "#C9A96E" }}
+      >
+        {authUser.fullName.charAt(0).toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p
+          className="text-xs font-medium truncate"
+          style={{ color: "#E2D9C8" }}
+        >
+          {authUser.fullName}
+        </p>
+        <p
+          className="text-xs truncate"
+          style={{ color: "rgba(143,163,184,0.6)" }}
+        >
+          {USER_ROLE_LABELS[authUser.role] ?? authUser.role}
+        </p>
+      </div>
+      <button
+        onClick={logout}
+        title="Cerrar sesión"
+        className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
+      >
+        <LogOut size={13} style={{ color: "#F87171" }} />
+      </button>
+    </div>
   );
 }

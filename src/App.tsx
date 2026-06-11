@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { loadTheme } from "./lib/theme";
 
-// Aplica el tema guardado antes de renderizar
 loadTheme();
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
@@ -15,7 +15,9 @@ import Personal from "./pages/Personal";
 import Finanzas from "./pages/Finanzas";
 import Flota from "./pages/Flota";
 import Inventario from "./pages/Inventario";
+import Login from "./pages/Login";
 
+/* ── Pantalla de carga ───────────────────────────── */
 function LoadingScreen() {
   return (
     <div
@@ -25,7 +27,6 @@ function LoadingScreen() {
           "linear-gradient(160deg,#060E1A 0%,#0A1628 50%,#0D1E35 100%)",
       }}
     >
-      {/* Logo SVG */}
       <div className="animate-fade-in">
         <svg
           viewBox="0 0 220 70"
@@ -95,8 +96,6 @@ function LoadingScreen() {
           </text>
         </svg>
       </div>
-
-      {/* Loading bar */}
       <div
         className="w-48 h-0.5 rounded-full overflow-hidden"
         style={{ background: "rgba(201,169,110,0.1)" }}
@@ -119,9 +118,36 @@ function LoadingScreen() {
   );
 }
 
+/* ── Guard + rutas ───────────────────────────────── */
 function AppRoutes() {
-  const { loading } = useApp();
-  if (loading) return <LoadingScreen />;
+  const { loading: appLoading } = useApp();
+  const { session, loading: authLoading, authUser } = useAuth();
+
+  if (authLoading || appLoading) return <LoadingScreen />;
+
+  // No hay sesión → login
+  if (!session) {
+    return <Login isFirstTime={false} />;
+  }
+
+  // Sesión pero sin perfil en staff_users → primer uso o email no confirmado
+  if (!authUser) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "#0A1628" }}
+      >
+        <div className="text-center space-y-3">
+          <p className="text-white font-semibold">Acceso pendiente</p>
+          <p className="text-white/50 text-sm max-w-xs">
+            Tu cuenta aún no tiene un perfil asignado. Contacta al usuario
+            Maestro para que complete tu registro.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <Routes>
@@ -145,8 +171,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppRoutes />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <AppRoutes />
+      </AppProvider>
+    </AuthProvider>
   );
 }

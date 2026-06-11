@@ -240,7 +240,12 @@ export interface CatalogCategory {
   items: CatalogItem[];
 }
 
-export type UserRole = "administrador" | "vendedor" | "operario" | "recepcion";
+export type UserRole =
+  | "maestro"
+  | "administrador"
+  | "vendedor"
+  | "equipo_tecnico"
+  | "familia";
 
 export interface AppUser {
   id: string;

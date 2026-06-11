@@ -482,11 +482,7 @@ const COMUNAS_POR_REGION: Record<string, string[]> = {
     "Torres del Paine",
   ],
 };
-import {
-  USER_ROLE_LABELS,
-  USER_ROLE_COLORS,
-  SUCURSALES,
-} from "../utils/mockData";
+import { USER_ROLE_LABELS, USER_ROLE_COLORS } from "../utils/mockData";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { applyTheme, THEMES, type ThemeKey } from "../lib/theme";
@@ -510,8 +506,13 @@ const inputCls =
    USUARIOS
    ════════════════════════════════════════════════════ */
 function TabUsuarios() {
-  const { users, addUser, updateUser, deleteUser } = useApp();
+  const { users, addUser, updateUser, deleteUser, sucursales } = useApp();
   const [editing, setEditing] = useState<AppUser | "new" | null>(null);
+  const [tempPassword, setTempPassword] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const sucursalOpts = sucursales.filter((s) => s.active).map((s) => s.name);
 
   const emptyUser = (): AppUser => ({
     id: crypto.randomUUID(),
@@ -519,7 +520,7 @@ function TabUsuarios() {
     email: "",
     phone: "",
     role: "vendedor",
-    sucursal: SUCURSALES[0],
+    sucursal: sucursalOpts[0] ?? "",
     active: true,
     createdAt: new Date().toISOString(),
   });
@@ -527,20 +528,46 @@ function TabUsuarios() {
   const [form, setForm] = useState<AppUser>(emptyUser());
 
   const openNew = () => {
-    setForm(emptyNew());
+    setForm({ ...emptyUser(), id: crypto.randomUUID() });
+    setTempPassword("");
+    setSaveError(null);
     setEditing("new");
   };
-  const emptyNew = () => ({ ...emptyUser(), id: crypto.randomUUID() });
 
   const openEdit = (u: AppUser) => {
     setForm({ ...u });
+    setTempPassword("");
+    setSaveError(null);
     setEditing(u);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.fullName || !form.email) return;
-    if (editing === "new") addUser(form);
-    else updateUser(form.id, form);
+    setSaveError(null);
+    setSaving(true);
+
+    if (editing === "new") {
+      if (!tempPassword || tempPassword.length < 6) {
+        setSaveError(
+          "La contraseña temporal debe tener al menos 6 caracteres.",
+        );
+        setSaving(false);
+        return;
+      }
+      // Crear cuenta en Supabase Auth sin afectar la sesión actual
+      const { createAuthUser } = await import("../lib/auth");
+      const { error: authErr } = await createAuthUser(form.email, tempPassword);
+      if (authErr) {
+        setSaveError(`Error al crear acceso: ${authErr}`);
+        setSaving(false);
+        return;
+      }
+      addUser(form);
+    } else {
+      updateUser(form.id, form);
+    }
+
+    setSaving(false);
     setEditing(null);
   };
 
@@ -590,6 +617,7 @@ function TabUsuarios() {
                   setForm((p) => ({ ...p, fullName: e.target.value }))
                 }
                 placeholder="Nombres y apellidos"
+                autoFocus
               />
             </div>
             <div>
@@ -603,6 +631,7 @@ function TabUsuarios() {
                 onChange={(e) =>
                   setForm((p) => ({ ...p, email: e.target.value }))
                 }
+                disabled={editing !== "new"}
               />
             </div>
             <div>
@@ -629,11 +658,13 @@ function TabUsuarios() {
                   setForm((p) => ({ ...p, role: e.target.value as UserRole }))
                 }
               >
-                {Object.entries(USER_ROLE_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
+                {Object.entries(USER_ROLE_LABELS)
+                  .filter(([k]) => k !== "maestro")
+                  .map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
               </select>
             </div>
             <div>
@@ -647,11 +678,31 @@ function TabUsuarios() {
                   setForm((p) => ({ ...p, sucursal: e.target.value }))
                 }
               >
-                {SUCURSALES.map((s) => (
+                {sucursalOpts.length === 0 && (
+                  <option value="">Sin sucursales registradas</option>
+                )}
+                {sucursalOpts.map((s) => (
                   <option key={s}>{s}</option>
                 ))}
               </select>
             </div>
+
+            {/* Contraseña temporal — solo al crear */}
+            {editing === "new" && (
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-slate-600 block mb-1">
+                  Contraseña temporal *
+                </label>
+                <input
+                  type="password"
+                  className={inputCls}
+                  value={tempPassword}
+                  onChange={(e) => setTempPassword(e.target.value)}
+                  placeholder="Mín. 6 caracteres — el usuario puede cambiarla"
+                />
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -667,6 +718,13 @@ function TabUsuarios() {
               </label>
             </div>
           </div>
+
+          {saveError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {saveError}
+            </p>
+          )}
+
           <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
             <button
               onClick={() => setEditing(null)}
@@ -676,9 +734,10 @@ function TabUsuarios() {
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium"
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg bg-navy-900 hover:bg-navy-800 font-medium disabled:opacity-50"
             >
-              <Check size={14} /> Guardar
+              <Check size={14} /> {saving ? "Guardando…" : "Guardar"}
             </button>
           </div>
         </div>
