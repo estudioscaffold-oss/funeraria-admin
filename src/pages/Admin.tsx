@@ -68,7 +68,9 @@ interface ServiceDestination {
 
 interface FuneralPlanItem {
   id: string;
-  text: string;
+  catalogItemId: string; // referencia al ítem del catálogo
+  name: string;
+  price: number;
 }
 interface FuneralPlan {
   id: string;
@@ -935,7 +937,19 @@ function ItemsSueltos() {
   );
 }
 
+const fmt = (n: number) =>
+  new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP" }).format(
+    n,
+  );
+
 function PlanesPane() {
+  const { catalog } = useApp();
+
+  // lista plana de todos los ítems del catálogo
+  const allCatalogItems = catalog.flatMap((cat) =>
+    cat.items.map((item) => ({ ...item, catName: cat.name })),
+  );
+
   const [planes, setPlanes] = useState<FuneralPlan[]>(() =>
     loadLS("veladesk-planes", []),
   );
@@ -949,17 +963,21 @@ function PlanesPane() {
     name: string;
     description: string;
     active: boolean;
-  }>({ name: "", description: "", active: true });
+  }>({
+    name: "",
+    description: "",
+    active: true,
+  });
   const [items, setItems] = useState<FuneralPlanItem[]>([]);
-  const [newItem, setNewItem] = useState("");
-  const [editItemIdx, setEditItemIdx] = useState<number | null>(null);
-  const [editItemVal, setEditItemVal] = useState("");
+  const [selectedCatalogId, setSelectedCatalogId] = useState("");
   const [openPlanId, setOpenPlanId] = useState<string | null>(null);
+
+  const total = items.reduce((acc, i) => acc + i.price, 0);
 
   const openNew = () => {
     setForm({ name: "", description: "", active: true });
     setItems([]);
-    setNewItem("");
+    setSelectedCatalogId("");
     setEditing("new");
   };
   const openEdit = (p: FuneralPlan) => {
@@ -969,19 +987,21 @@ function PlanesPane() {
       active: p.active,
     });
     setItems([...p.items]);
-    setNewItem("");
+    setSelectedCatalogId("");
     setEditing(p);
   };
   const handleSave = () => {
     if (!form.name.trim()) return;
     if (editing === "new") {
-      const np: FuneralPlan = {
-        id: crypto.randomUUID(),
-        ...form,
-        items,
-        createdAt: new Date().toISOString(),
-      };
-      save([...planes, np]);
+      save([
+        ...planes,
+        {
+          id: crypto.randomUUID(),
+          ...form,
+          items,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
     } else {
       save(
         planes.map((p) =>
@@ -992,19 +1012,25 @@ function PlanesPane() {
     setEditing(null);
   };
 
-  const addPlanItem = () => {
-    const v = newItem.trim();
-    if (!v) return;
-    setItems((p) => [...p, { id: crypto.randomUUID(), text: v }]);
-    setNewItem("");
+  const addFromCatalog = () => {
+    if (!selectedCatalogId) return;
+    const found = allCatalogItems.find((i) => i.id === selectedCatalogId);
+    if (!found) return;
+    // permitir duplicados (mismo ítem puede aparecer varias veces en un plan)
+    setItems((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        catalogItemId: found.id,
+        name: found.name,
+        price: found.price,
+      },
+    ]);
+    setSelectedCatalogId("");
   };
-  const confirmEditItem = () => {
-    if (editItemIdx === null) return;
-    setItems((p) =>
-      p.map((x, i) => (i === editItemIdx ? { ...x, text: editItemVal } : x)),
-    );
-    setEditItemIdx(null);
-  };
+
+  const planTotal = (plan: FuneralPlan) =>
+    plan.items.reduce((a, i) => a + i.price, 0);
 
   return (
     <div className="space-y-4">
@@ -1020,9 +1046,9 @@ function PlanesPane() {
         </button>
       </div>
 
-      {/* form */}
+      {/* ── formulario ── */}
       {editing !== null && (
-        <div className="bg-white rounded-xl border border-gold-200 shadow-md p-5 space-y-4">
+        <div className="bg-white rounded-xl border border-gold-200 shadow-md p-5 space-y-5">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-800 text-sm">
               {editing === "new"
@@ -1036,6 +1062,8 @@ function PlanesPane() {
               <X size={16} className="text-slate-400" />
             </button>
           </div>
+
+          {/* datos del plan */}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="text-xs font-medium text-slate-600 block mb-1">
@@ -1067,93 +1095,110 @@ function PlanesPane() {
             </div>
           </div>
 
-          {/* items del plan */}
+          {/* selector de ítems del catálogo */}
           <div>
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">
-              Ítems incluidos en el plan
+              Agregar ítem desde catálogo
             </label>
-            {items.length > 0 && (
-              <ul className="space-y-1.5 mb-3">
-                {items.map((item, idx) => (
-                  <li
-                    key={item.id}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50"
-                  >
-                    {editItemIdx === idx ? (
-                      <>
-                        <input
-                          className={`${inputCls} flex-1 py-1`}
-                          value={editItemVal}
-                          onChange={(e) => setEditItemVal(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") confirmEditItem();
-                            if (e.key === "Escape") setEditItemIdx(null);
-                          }}
-                          autoFocus
-                        />
-                        <button
-                          onClick={confirmEditItem}
-                          className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
-                        >
-                          <Check size={13} />
-                        </button>
-                        <button
-                          onClick={() => setEditItemIdx(null)}
-                          className="p-1 text-slate-400 hover:bg-slate-100 rounded"
-                        >
-                          <X size={13} />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <span className="flex-1 text-sm text-slate-700">
-                          {item.text}
-                        </span>
-                        <button
-                          onClick={() => {
-                            setEditItemIdx(idx);
-                            setEditItemVal(item.text);
-                          }}
-                          className="p-1 text-slate-400 hover:text-amber-600 rounded"
-                        >
-                          <Edit size={13} />
-                        </button>
-                        <button
-                          onClick={() =>
-                            setItems((p) => p.filter((_, i) => i !== idx))
-                          }
-                          className="p-1 text-slate-400 hover:text-red-500 rounded"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
+            {allCatalogItems.length === 0 ? (
+              <p className="text-sm text-slate-400 italic">
+                No hay ítems sueltos en el catálogo. Agrégalos primero en la
+                pestaña "Ítems sueltos".
+              </p>
+            ) : (
+              <div className="flex gap-2">
+                <select
+                  className={inputCls + " flex-1"}
+                  value={selectedCatalogId}
+                  onChange={(e) => setSelectedCatalogId(e.target.value)}
+                >
+                  <option value="">— Seleccionar ítem del catálogo —</option>
+                  {catalog.map((cat) => (
+                    <optgroup key={cat.id} label={cat.name}>
+                      {cat.items.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} — {fmt(item.price)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <button
+                  onClick={addFromCatalog}
+                  disabled={!selectedCatalogId}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Plus size={13} /> Agregar
+                </button>
+              </div>
             )}
-            <div className="flex gap-2">
-              <input
-                className={`${inputCls} flex-1`}
-                value={newItem}
-                onChange={(e) => setNewItem(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addPlanItem();
-                  }
-                }}
-                placeholder="Agregar ítem al plan…"
-              />
-              <button
-                onClick={addPlanItem}
-                disabled={!newItem.trim()}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
-              >
-                <Plus size={13} /> Agregar
-              </button>
-            </div>
           </div>
+
+          {/* lista de ítems agregados */}
+          {items.length > 0 && (
+            <div>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">
+                Ítems incluidos en el plan
+              </label>
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-100">
+                    <tr>
+                      <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        Ítem
+                      </th>
+                      <th className="text-right px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        Precio
+                      </th>
+                      <th className="w-10 px-2 py-2" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {items.map((item, idx) => (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-slate-50/70 transition-colors"
+                      >
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                            <span className="text-slate-700">{item.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-medium tabular-nums text-slate-700">
+                          {fmt(item.price)}
+                        </td>
+                        <td className="px-2 py-2.5 text-center">
+                          <button
+                            onClick={() =>
+                              setItems((p) => p.filter((_, i) => i !== idx))
+                            }
+                            className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-200 bg-slate-50">
+                      <td className="px-4 py-3 text-sm font-bold text-slate-700">
+                        Total del plan
+                      </td>
+                      <td
+                        className="px-4 py-3 text-right text-base font-bold tabular-nums"
+                        style={{ color: "#A07840" }}
+                      >
+                        {fmt(total)}
+                      </td>
+                      <td />
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <input
@@ -1186,7 +1231,7 @@ function PlanesPane() {
         </div>
       )}
 
-      {/* lista planes */}
+      {/* ── listado de planes ── */}
       {planes.length === 0 && editing === null && (
         <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-slate-400 text-sm">
           Sin planes creados aún
@@ -1225,6 +1270,14 @@ function PlanesPane() {
               >
                 {plan.active ? "Activo" : "Inactivo"}
               </span>
+              {plan.items.length > 0 && (
+                <span
+                  className="text-sm font-bold tabular-nums"
+                  style={{ color: "#A07840" }}
+                >
+                  {fmt(planTotal(plan))}
+                </span>
+              )}
             </div>
             <div
               className="flex items-center gap-1"
@@ -1247,22 +1300,45 @@ function PlanesPane() {
               </button>
             </div>
           </button>
+
           {openPlanId === plan.id && (
-            <div className="divide-y divide-slate-50">
-              {plan.items.length === 0 && (
+            <div>
+              {plan.items.length === 0 ? (
                 <p className="px-5 py-4 text-sm text-slate-400 text-center">
                   Sin ítems
                 </p>
+              ) : (
+                <table className="w-full text-sm">
+                  <tbody className="divide-y divide-slate-50">
+                    {plan.items.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50/40">
+                        <td className="px-5 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                            <span className="text-slate-700">{item.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-2.5 text-right font-medium tabular-nums text-slate-600">
+                          {fmt(item.price)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-200 bg-slate-50">
+                      <td className="px-5 py-3 text-sm font-bold text-slate-700">
+                        Total
+                      </td>
+                      <td
+                        className="px-5 py-3 text-right text-base font-bold tabular-nums"
+                        style={{ color: "#A07840" }}
+                      >
+                        {fmt(planTotal(plan))}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
               )}
-              {plan.items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 px-5 py-2.5"
-                >
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                  <p className="text-sm text-slate-700">{item.text}</p>
-                </div>
-              ))}
             </div>
           )}
         </div>
