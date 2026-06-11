@@ -506,7 +506,8 @@ const inputCls =
    USUARIOS
    ════════════════════════════════════════════════════ */
 function TabUsuarios() {
-  const { users, addUser, updateUser, deleteUser, sucursales } = useApp();
+  const { users, addUser, updateUser, deleteUser, sucursales, deceased } =
+    useApp();
   const [editing, setEditing] = useState<AppUser | "new" | null>(null);
   const [tempPassword, setTempPassword] = useState("");
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -700,6 +701,40 @@ function TabUsuarios() {
                   onChange={(e) => setTempPassword(e.target.value)}
                   placeholder="Mín. 6 caracteres — el usuario puede cambiarla"
                 />
+              </div>
+            )}
+
+            {/* Vincular a fallecido — solo rol familia */}
+            {form.role === "familia" && (
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-slate-600 block mb-1">
+                  Vincular con fallecido *
+                </label>
+                <select
+                  className={inputCls}
+                  value={form.deceasedId ?? ""}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      deceasedId: e.target.value || undefined,
+                    }))
+                  }
+                >
+                  <option value="">— Seleccionar fallecido —</option>
+                  {deceased.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.fullName}
+                      {d.deathDate
+                        ? ` · ${new Date(d.deathDate).toLocaleDateString("es-CL")}`
+                        : ""}
+                    </option>
+                  ))}
+                </select>
+                {deceased.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    No hay fallecidos registrados. Agrégalos primero en Fichas.
+                  </p>
+                )}
               </div>
             )}
 

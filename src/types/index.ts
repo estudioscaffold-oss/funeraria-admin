@@ -255,6 +255,7 @@ export interface AppUser {
   role: UserRole;
   sucursal: string;
   active: boolean;
+  deceasedId?: string; // vinculación para rol "familia"
   createdAt: string;
 }
 

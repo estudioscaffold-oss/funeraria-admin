@@ -242,6 +242,7 @@ export const dbUsers = {
       role: r.role,
       sucursal: r.sucursal,
       active: r.active,
+      deceasedId: r.deceased_id ?? undefined,
       createdAt: r.created_at,
     }));
   },
@@ -255,6 +256,7 @@ export const dbUsers = {
       role: u.role,
       sucursal: u.sucursal,
       active: u.active,
+      deceased_id: u.deceasedId ?? null,
       created_at: u.createdAt,
     });
     if (error) throw error;

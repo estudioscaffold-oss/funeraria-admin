@@ -53,15 +53,19 @@ create table if not exists funeral_services (
 
 -- 3. Usuarios / personal
 create table if not exists staff_users (
-  id         text primary key,
-  full_name  text not null,
-  email      text unique,
-  phone      text,
-  role       text,
-  sucursal   text,
-  active     boolean default true,
-  created_at text
+  id          text primary key,
+  full_name   text not null,
+  email       text unique,
+  phone       text,
+  role        text,
+  sucursal    text,
+  active      boolean default true,
+  deceased_id text,   -- vinculación para rol "familia"
+  created_at  text
 );
+
+-- Agrega columna si ya existe la tabla (para bases de datos existentes)
+alter table staff_users add column if not exists deceased_id text;
 
 -- 4. Convenios
 create table if not exists convenios (

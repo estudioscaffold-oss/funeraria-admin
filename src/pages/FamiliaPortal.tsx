@@ -16,7 +16,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import type { ProcessStatus } from "../types";
+import { useApp } from "../context/AppContext";
+import type { ProcessStatus, DeceasedRecord } from "../types";
 
 /* ── Etapas del servicio ─────────────────────────── */
 const ETAPAS: {
@@ -69,34 +70,61 @@ const ETAPAS: {
   },
 ];
 
-/* ── Datos de ejemplo (luego se reemplazan con data real) ── */
-const MOCK_SERVICE = {
-  deceasedName: "María Elena González Vidal",
-  rut: "8.234.567-3",
-  serviceType: "Servicio completo",
-  status: "velatorio" as ProcessStatus,
-  velatorio: "Sala Serenidad — Casa Central",
-  velatorioAddress: "Av. Providencia 1234, Santiago",
-  velatorioStart: "2026-06-12T18:00:00",
-  velatorioEnd: "2026-06-13T10:00:00",
-  cemetery: "Cementerio Parque del Recuerdo",
-  cemeteryAddress: "Av. Las Condes 8800, Vitacura",
-  ceremonyDate: "2026-06-13T11:00:00",
-  religiousPreference: "Católica",
-  contactName: "Carlos Fuentes",
-  contactPhone: "+56 9 8765 4321",
-  activatedAt: new Date(Date.now() - 14 * 60 * 60 * 1000).toISOString(), // hace 14h
-  items: [
-    { name: "Ataúd madera caoba", category: "Ataúdes" },
-    { name: "Traslado en carroza fúnebre", category: "Traslado" },
-    { name: "Sala velatorio — 16 horas", category: "Velatorio" },
-    { name: "Arreglo floral corona grande", category: "Flores" },
-    { name: "Avisos fúnebres (2 diarios)", category: "Publicaciones" },
-    { name: "Gestión documentación SRCeI", category: "Documentación" },
-    { name: "Ceremonia religiosa — Capilla", category: "Ceremonia" },
-    { name: "Café y agua para asistentes", category: "Recepción" },
-  ],
-};
+/* ── Helper: armar datos de servicio desde DeceasedRecord ── */
+function buildService(d: DeceasedRecord) {
+  // Recopilar ítems aprobados de presupuestos
+  const items: { name: string; category: string }[] = [];
+  d.budgets?.forEach((b) => {
+    if (b.status === "aprobado") {
+      b.items?.forEach((item) => {
+        if (item.description && item.description !== "__custom__") {
+          items.push({
+            name: item.description,
+            category: item.category ?? "Servicio",
+          });
+        }
+      });
+    }
+  });
+
+  return {
+    deceasedName: d.fullName,
+    rut: d.rut ?? "",
+    serviceType:
+      d.serviceType === "servicio_completo"
+        ? "Servicio completo"
+        : d.serviceType === "inhumacion"
+          ? "Inhumación"
+          : d.serviceType === "cremacion"
+            ? "Cremación"
+            : d.serviceType === "traslado"
+              ? "Traslado"
+              : d.serviceType === "velatorio"
+                ? "Velatorio"
+                : "Servicio funerario",
+    status: (d.status ?? "recepcion") as ProcessStatus,
+    velatorio: d.velatorio ?? "",
+    velatorioAddress: d.velatorioAddress ?? "",
+    velatorioStart: d.createdAt, // placeholder hasta tener campo real
+    velatorioEnd: "",
+    cemetery: d.cemetery ?? "",
+    cemeteryAddress: d.cemeteryAddress ?? "",
+    ceremonyDate: "",
+    religiousPreference:
+      d.religiousPreference === "catolica"
+        ? "Católica"
+        : d.religiousPreference === "evangelica"
+          ? "Evangélica"
+          : d.religiousPreference === "ninguna"
+            ? "Sin preferencia religiosa"
+            : (d.religiousPreference ?? ""),
+    contactName: d.assignedStaff ?? "Equipo Veladesk",
+    contactPhone: d.familyContact?.phone ?? "",
+    activatedAt: d.createdAt,
+    items,
+    tasks: d.tasks ?? [],
+  };
+}
 
 /* ── Helper: etapa actual ────────────────────────── */
 function etapaIndex(status: ProcessStatus): number {
@@ -141,11 +169,52 @@ function fmtTime(iso: string) {
 ════════════════════════════════════════════════════ */
 export default function FamiliaPortal() {
   const { authUser, logout } = useAuth();
-  const svc = MOCK_SERVICE;
-  const { h, m, s, pct, expired } = useCountdown(svc.activatedAt);
-  const curIdx = etapaIndex(svc.status);
+  const { deceased } = useApp();
   const [itemsOpen, setItemsOpen] = useState(false);
   const [etapasOpen, setEtapasOpen] = useState(true);
+
+  // Buscar el fallecido vinculado al usuario familia
+  const linkedDeceased = authUser?.deceasedId
+    ? deceased.find((d) => d.id === authUser.deceasedId)
+    : null;
+
+  // Construir datos (placeholder vacío si no hay vínculo todavía)
+  const svc = linkedDeceased ? buildService(linkedDeceased) : null;
+
+  // Todos los hooks deben ir antes de cualquier return condicional
+  const { h, m, s, pct, expired } = useCountdown(
+    svc?.activatedAt ?? new Date().toISOString(),
+  );
+  const curIdx = etapaIndex((svc?.status ?? "recepcion") as ProcessStatus);
+
+  // Sin vínculo configurado
+  if (!linkedDeceased || !svc) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center p-6"
+        style={{ background: "#FAF9F7" }}
+      >
+        <div className="text-center max-w-xs">
+          <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4">
+            <FileText size={28} className="text-stone-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-stone-800 mb-2">
+            Sin servicio asignado
+          </h2>
+          <p className="text-stone-500 text-sm mb-6">
+            Tu cuenta aún no está vinculada a ningún servicio. Comunícate con la
+            funeraria para completar tu registro.
+          </p>
+          <button
+            onClick={logout}
+            className="text-sm text-stone-400 hover:text-stone-600 underline"
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (expired) {
     return (
