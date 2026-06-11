@@ -16,6 +16,7 @@ import Finanzas from "./pages/Finanzas";
 import Flota from "./pages/Flota";
 import Inventario from "./pages/Inventario";
 import Login from "./pages/Login";
+import FamiliaPortal from "./pages/FamiliaPortal";
 
 /* ── Pantalla de carga ───────────────────────────── */
 function LoadingScreen() {
@@ -128,6 +129,11 @@ function AppRoutes() {
   // No hay sesión → login
   if (!session) {
     return <Login isFirstTime={false} />;
+  }
+
+  // Rol familia → portal independiente (sin Layout admin)
+  if (authUser?.role === "familia") {
+    return <FamiliaPortal />;
   }
 
   // Sesión pero sin perfil en staff_users → primer uso o email no confirmado
