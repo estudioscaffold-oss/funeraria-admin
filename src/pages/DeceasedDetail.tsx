@@ -463,7 +463,7 @@ function BudgetForm({
   onSave: (b: DeceasedBudget) => void;
   onCancel: () => void;
 }) {
-  const { catalog, convenios, sucursales } = useApp();
+  const { catalog, convenios, sucursales, inventory } = useApp();
   const isNew = !initial;
   const pad = String(existingCount + 1).padStart(3, "0");
   const year = new Date().getFullYear();
@@ -675,11 +675,147 @@ function BudgetForm({
               }
             >
               <option value="borrador">Borrador</option>
-              <option value="aprobado">Aprobado</option>
+              <option value="aprobado">
+                ✓ Aprobado — descuenta inventario
+              </option>
               <option value="facturado">Facturado</option>
             </select>
           </div>
         </div>
+
+        {/* aviso de descuento de inventario */}
+        {(() => {
+          // calcular qué ítems del presupuesto tienen match en inventario
+          const matchedItems = form.items
+            .filter(
+              (bi) =>
+                bi.description &&
+                bi.description !== "__custom__" &&
+                bi.quantity > 0,
+            )
+            .map((bi) => {
+              const inv = inventory.find(
+                (i) =>
+                  i.name.trim().toLowerCase() ===
+                  bi.description.trim().toLowerCase(),
+              );
+              return inv
+                ? {
+                    name: inv.name,
+                    qty: bi.quantity,
+                    unit: inv.unit,
+                    stockActual: inv.quantity,
+                    stockFinal: Math.max(0, inv.quantity - bi.quantity),
+                    sinStock: inv.quantity - bi.quantity < 0,
+                  }
+                : null;
+            })
+            .filter(Boolean) as {
+            name: string;
+            qty: number;
+            unit: string;
+            stockActual: number;
+            stockFinal: number;
+            sinStock: boolean;
+          }[];
+
+          if (matchedItems.length === 0) return null;
+
+          const isAlreadyApproved = initial?.status === "aprobado";
+          const willDeduct = form.status === "aprobado" && !isAlreadyApproved;
+          const hasWarning = matchedItems.some((i) => i.sinStock);
+
+          return (
+            <div
+              className="rounded-xl p-4 border text-sm space-y-3"
+              style={{
+                background: willDeduct
+                  ? hasWarning
+                    ? "#FFF7ED"
+                    : "#F0FDF4"
+                  : "#F8FAFC",
+                borderColor: willDeduct
+                  ? hasWarning
+                    ? "#FED7AA"
+                    : "#BBF7D0"
+                  : "#E2E8F0",
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-xs font-bold uppercase tracking-wide"
+                  style={{
+                    color: willDeduct
+                      ? hasWarning
+                        ? "#C2410C"
+                        : "#15803D"
+                      : "#64748B",
+                  }}
+                >
+                  {willDeduct
+                    ? hasWarning
+                      ? "⚠ Aprobación afectará inventario — stock insuficiente en algún ítem"
+                      : "✓ Al aprobar se descontará del inventario"
+                    : isAlreadyApproved
+                      ? "✓ Inventario ya fue descontado al aprobar este presupuesto"
+                      : "ℹ El inventario se descontará automáticamente al marcar como Aprobado"}
+                </span>
+              </div>
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-slate-500">
+                    <th className="text-left pb-1 font-semibold">
+                      Ítem en inventario
+                    </th>
+                    <th className="text-center pb-1 font-semibold">
+                      A descontar
+                    </th>
+                    <th className="text-center pb-1 font-semibold">
+                      Stock actual
+                    </th>
+                    <th className="text-center pb-1 font-semibold">
+                      Stock resultante
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {matchedItems.map((item) => (
+                    <tr key={item.name}>
+                      <td className="py-1 font-medium text-slate-700">
+                        {item.name}
+                      </td>
+                      <td className="py-1 text-center text-slate-600">
+                        -{item.qty} {item.unit}
+                      </td>
+                      <td className="py-1 text-center text-slate-600">
+                        {item.stockActual} {item.unit}
+                      </td>
+                      <td
+                        className="py-1 text-center font-bold"
+                        style={{
+                          color: item.sinStock ? "#DC2626" : "#15803D",
+                        }}
+                      >
+                        {item.stockFinal} {item.unit}
+                        {item.sinStock && (
+                          <span className="ml-1 text-red-500">⚠</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {matchedItems.length <
+                form.items.filter(
+                  (i) => i.description && i.description !== "__custom__",
+                ).length && (
+                <p className="text-xs text-slate-400">
+                  * Los ítems sin coincidencia en inventario no se descuentan.
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         {/* items table */}
         <div>

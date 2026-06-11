@@ -321,18 +321,81 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deleteQuote = (id: string) =>
     setQuotes((p) => p.filter((q) => q.id !== id));
 
+  /* ── helper: descontar stock cuando presupuesto pasa a "aprobado" ── */
+  const deductStockForBudget = (b: DeceasedBudget, deceasedName: string) => {
+    if (b.status !== "aprobado") return;
+
+    setInventory((prevInv) => {
+      let next = [...prevInv];
+      const logEntries: Omit<InventoryAuditEntry, "id" | "date">[] = [];
+
+      b.items.forEach((budgetItem) => {
+        if (!budgetItem.description || budgetItem.description === "__custom__")
+          return;
+        const nameToMatch = budgetItem.description.trim().toLowerCase();
+        const idx = next.findIndex(
+          (inv) => inv.name.trim().toLowerCase() === nameToMatch,
+        );
+        if (idx === -1) return; // no hay coincidencia en inventario
+
+        const inv = next[idx];
+        const newQty = Math.max(0, inv.quantity - budgetItem.quantity);
+        next = next.map((item, i) =>
+          i === idx
+            ? { ...item, quantity: newQty, updatedAt: new Date().toISOString() }
+            : item,
+        );
+        logEntries.push({
+          itemId: inv.id,
+          itemName: inv.name,
+          action: "salida",
+          quantityBefore: inv.quantity,
+          quantityAfter: newQty,
+          notes: `Presupuesto aprobado ${b.number} — ${deceasedName}`,
+        });
+      });
+
+      lsSave("veladesk-inventory", next);
+
+      // registrar en audit log
+      if (logEntries.length > 0) {
+        setInventoryLog((prevLog) => {
+          const newEntries: InventoryAuditEntry[] = logEntries.map((e) => ({
+            ...e,
+            id: crypto.randomUUID(),
+            date: new Date().toISOString(),
+          }));
+          const updated = [...newEntries, ...prevLog].slice(0, 500);
+          lsSave("veladesk-inventory-log", updated);
+          return updated;
+        });
+      }
+
+      return next;
+    });
+  };
+
   /* ── budgets (stored inside deceased JSONB) ── */
   const addBudget = (deceasedId: string, b: DeceasedBudget) => {
     const d = deceased.find((x) => x.id === deceasedId);
     if (!d) return;
     updDeceased(deceasedId, { budgets: [...d.budgets, b] });
+    // descontar stock si se crea directamente como aprobado
+    if (b.status === "aprobado") {
+      deductStockForBudget(b, d.fullName);
+    }
   };
   const updateBudget = (deceasedId: string, b: DeceasedBudget) => {
     const d = deceased.find((x) => x.id === deceasedId);
     if (!d) return;
+    const prev = d.budgets.find((x) => x.id === b.id);
     updDeceased(deceasedId, {
       budgets: d.budgets.map((x) => (x.id === b.id ? b : x)),
     });
+    // descontar stock solo cuando el estado cambia a "aprobado" por primera vez
+    if (b.status === "aprobado" && prev?.status !== "aprobado") {
+      deductStockForBudget(b, d.fullName);
+    }
   };
   const deleteBudget = (deceasedId: string, budgetId: string) => {
     const d = deceased.find((x) => x.id === deceasedId);
