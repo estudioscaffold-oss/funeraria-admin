@@ -345,6 +345,8 @@ export interface DeceasedRecord {
   createdAt: string;
   updatedAt: string;
   assignedStaff?: string;
+  assignedTechnicalIds?: string[]; // IDs de equipo_tecnico asignados
+  assignedVehicleIds?: string[]; // IDs de vehículos de flota asignados
   /* ── Contrato ── */
   contractSignature?: {
     signerName: string;

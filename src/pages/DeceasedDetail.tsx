@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
+import { useCollection } from "../hooks/useCollection";
+import type { Vehicle } from "../types";
 import {
   ChevronLeft,
   Edit,
@@ -23,6 +25,8 @@ import {
   Mail,
   ArrowLeft,
   Download,
+  Users,
+  Truck,
 } from "lucide-react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import OrdenServicioPDF from "../components/pdf/OrdenServicioPDF";
@@ -92,6 +96,7 @@ const TABS = [
   { id: "datos", label: "Datos Personales" },
   { id: "documentos", label: "Certificados y Docs." },
   { id: "progreso", label: "Progreso del Servicio" },
+  { id: "equipo", label: "Equipo & Flota" },
   { id: "presupuesto", label: "Presupuesto" },
   { id: "pagos", label: "Registro de Pagos" },
 ];
@@ -1692,6 +1697,175 @@ function TabPagos({ d }: { d: ReturnType<typeof useApp>["deceased"][0] }) {
   );
 }
 
+/* ─── TAB: Equipo & Flota ─────────────────────────── */
+function TabEquipo({ d }: { d: ReturnType<typeof useApp>["deceased"][0] }) {
+  const { users, updateDeceased } = useApp();
+  const [vehicles] = useCollection<Vehicle>("veladesk-flota", []);
+
+  const tecnicos = users.filter((u) => u.role === "equipo_tecnico" && u.active);
+  const assigned = d.assignedTechnicalIds ?? [];
+  const assignedVeh = d.assignedVehicleIds ?? [];
+
+  const toggleTecnico = (uid: string) => {
+    updateDeceased(d.id, {
+      assignedTechnicalIds: assigned.includes(uid)
+        ? assigned.filter((x) => x !== uid)
+        : [...assigned, uid],
+    });
+  };
+
+  const toggleVehicle = (vid: string) => {
+    updateDeceased(d.id, {
+      assignedVehicleIds: assignedVeh.includes(vid)
+        ? assignedVeh.filter((x) => x !== vid)
+        : [...assignedVeh, vid],
+    });
+  };
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      {/* Personal técnico */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div
+          className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2.5"
+          style={{
+            background:
+              "linear-gradient(90deg,rgba(201,169,110,0.06) 0%,transparent 100%)",
+          }}
+        >
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: "rgba(201,169,110,0.12)" }}
+          >
+            <Users size={14} style={{ color: "#A07840" }} />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm" style={{ color: "#0A1628" }}>
+              Personal Técnico Asignado
+            </h3>
+            <p className="text-xs text-slate-400">
+              {assigned.length} técnico{assigned.length !== 1 ? "s" : ""}{" "}
+              asignado{assigned.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+        </div>
+        <div className="p-5">
+          {tecnicos.length === 0 ? (
+            <p className="text-sm text-slate-400 italic">
+              No hay personal técnico activo. Agrégalos en Administrador →
+              Usuarios.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {tecnicos.map((u) => {
+                const checked = assigned.includes(u.id);
+                return (
+                  <label
+                    key={u.id}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-all ${
+                      checked
+                        ? "border-emerald-400 bg-emerald-50"
+                        : "border-slate-200 hover:border-slate-300 bg-white"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleTecnico(u.id)}
+                      className="accent-emerald-600 w-4 h-4"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-700 truncate">
+                        {u.fullName}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {u.sucursal || "Sin sucursal"}
+                      </p>
+                    </div>
+                    {checked && (
+                      <Check size={14} className="text-emerald-600 shrink-0" />
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Flota */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div
+          className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2.5"
+          style={{
+            background:
+              "linear-gradient(90deg,rgba(201,169,110,0.06) 0%,transparent 100%)",
+          }}
+        >
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: "rgba(201,169,110,0.12)" }}
+          >
+            <Truck size={14} style={{ color: "#A07840" }} />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm" style={{ color: "#0A1628" }}>
+              Vehículos Asignados
+            </h3>
+            <p className="text-xs text-slate-400">
+              {assignedVeh.length} vehículo{assignedVeh.length !== 1 ? "s" : ""}{" "}
+              asignado{assignedVeh.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+        </div>
+        <div className="p-5">
+          {vehicles.length === 0 ? (
+            <p className="text-sm text-slate-400 italic">
+              No hay vehículos registrados. Agrégalos en Gestión de Flota.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {vehicles
+                .filter((v) => v.status === "activo")
+                .map((v) => {
+                  const checked = assignedVeh.includes(v.id);
+                  return (
+                    <label
+                      key={v.id}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-all ${
+                        checked
+                          ? "border-indigo-400 bg-indigo-50"
+                          : "border-slate-200 hover:border-slate-300 bg-white"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleVehicle(v.id)}
+                        className="accent-indigo-600 w-4 h-4"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-700 truncate">
+                          {v.brand} {v.model}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {v.plate} · {v.type.replace(/_/g, " ")}
+                        </p>
+                      </div>
+                      {checked && (
+                        <Check size={14} className="text-indigo-600 shrink-0" />
+                      )}
+                    </label>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main page ───────────────────────────────────── */
 export default function DeceasedDetail() {
   const { id } = useParams();
@@ -1811,6 +1985,7 @@ export default function DeceasedDetail() {
         {activeTab === "datos" && <TabDatos d={d} />}
         {activeTab === "documentos" && <TabDocumentos d={d} />}
         {activeTab === "progreso" && <TabProgreso d={d} />}
+        {activeTab === "equipo" && <TabEquipo d={d} />}
         {activeTab === "presupuesto" && <TabPresupuesto d={d} />}
         {activeTab === "pagos" && <TabPagos d={d} />}
       </div>

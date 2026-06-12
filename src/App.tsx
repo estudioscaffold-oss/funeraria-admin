@@ -19,6 +19,7 @@ import Flota from "./pages/Flota";
 import Inventario from "./pages/Inventario";
 import Login from "./pages/Login";
 import FamiliaPortal from "./pages/FamiliaPortal";
+import TecnicoPortal from "./pages/TecnicoPortal";
 import { getAllowedRoutes, type NavRoute } from "./lib/permissions";
 import { Navigate } from "react-router-dom";
 
@@ -138,6 +139,11 @@ function AppRoutes() {
   // Rol familia → portal independiente (sin Layout admin)
   if (authUser?.role === "familia") {
     return <FamiliaPortal />;
+  }
+
+  // Rol equipo_tecnico → portal operacional propio
+  if (authUser?.role === "equipo_tecnico") {
+    return <TecnicoPortal />;
   }
 
   // Sesión pero sin perfil en staff_users → usuario borrado o sin perfil aún

@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useApp } from "../context/AppContext";
+import { useCollection } from "../hooks/useCollection";
 import type { AppUser, ShiftAssignment, ShiftType } from "../types";
 import {
   ChevronLeft,
@@ -287,7 +288,10 @@ export default function Personal() {
   const { users } = useApp();
   const [view, setView] = useState<"semana" | "mes">("semana");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
+  const [assignments, setAssignments] = useCollection<ShiftAssignment>(
+    "veladesk-turnos",
+    [],
+  );
   const [searchQ, setSearchQ] = useState("");
   const dragUserId = useRef<string | null>(null);
 
@@ -314,15 +318,15 @@ export default function Personal() {
       )
     )
       return;
-    setAssignments((p) => [
-      ...p,
+    setAssignments([
+      ...assignments,
       { id: crypto.randomUUID(), userId: uid, date, shift },
     ]);
     dragUserId.current = null;
   };
 
   const handleRemove = (id: string) =>
-    setAssignments((p) => p.filter((a) => a.id !== id));
+    setAssignments(assignments.filter((a) => a.id !== id));
 
   /* nav */
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
@@ -646,8 +650,8 @@ export default function Personal() {
                             ),
                         );
                         if (!next) return;
-                        setAssignments((p) => [
-                          ...p,
+                        setAssignments([
+                          ...assignments,
                           {
                             id: crypto.randomUUID(),
                             userId: uid,
