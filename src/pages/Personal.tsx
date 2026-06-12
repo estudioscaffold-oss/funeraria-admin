@@ -364,6 +364,7 @@ export default function Personal() {
   const activeUsers = users.filter(
     (u) =>
       u.active &&
+      ["administrador", "vendedor", "equipo_tecnico"].includes(u.role) &&
       (searchQ === "" ||
         u.fullName.toLowerCase().includes(searchQ.toLowerCase())),
   );
@@ -480,10 +481,7 @@ export default function Personal() {
               <p className="text-sm" style={{ color: "#64748B" }}>
                 Sin personal activo
               </p>
-              <p
-                className="text-xs mt-1"
-                style={{ color: "#94A3B8" }}
-              >
+              <p className="text-xs mt-1" style={{ color: "#94A3B8" }}>
                 Agrega personal en Administrador
               </p>
             </div>
@@ -508,10 +506,7 @@ export default function Personal() {
             <div key={s.key} className="flex items-center gap-2 py-1">
               <s.Icon size={11} style={{ color: "#C9A96E" }} />
               <span className="text-xs" style={{ color: "#64748B" }}>
-                {s.label}{" "}
-                <span style={{ color: "#94A3B8" }}>
-                  {s.hours}
-                </span>
+                {s.label} <span style={{ color: "#94A3B8" }}>{s.hours}</span>
               </span>
             </div>
           ))}
@@ -656,10 +651,7 @@ export default function Personal() {
                           >
                             {shift.label}
                           </p>
-                          <p
-                            className="text-xs"
-                            style={{ color: "#94A3B8" }}
-                          >
+                          <p className="text-xs" style={{ color: "#94A3B8" }}>
                             {shift.hours}
                           </p>
                         </div>
