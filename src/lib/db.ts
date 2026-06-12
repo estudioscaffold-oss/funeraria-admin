@@ -37,6 +37,8 @@ const toDB = (r: DeceasedRecord): Record<string, any> => ({
   restrictions: r.restrictions || null,
   sensitive_observations: r.sensitiveObservations || null,
   assigned_staff: r.assignedStaff || null,
+  assigned_technical_ids: r.assignedTechnicalIds ?? [],
+  assigned_vehicle_ids: r.assignedVehicleIds ?? [],
   family_contact: r.familyContact,
   documents: r.documents,
   budgets: r.budgets,
@@ -72,6 +74,8 @@ const fromDB = (r: Record<string, any>): DeceasedRecord => ({
   restrictions: r.restrictions ?? "",
   sensitiveObservations: r.sensitive_observations ?? "",
   assignedStaff: r.assigned_staff ?? "",
+  assignedTechnicalIds: r.assigned_technical_ids ?? [],
+  assignedVehicleIds: r.assigned_vehicle_ids ?? [],
   familyContact: r.family_contact ?? {
     name: "",
     rut: "",

@@ -1870,7 +1870,8 @@ function TabEquipo({ d }: { d: ReturnType<typeof useApp>["deceased"][0] }) {
 export default function DeceasedDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { deceased, deleteDeceased } = useApp();
+  const { deceased, deleteDeceased, users } = useApp();
+  const [vehicles] = useCollection<Vehicle>("veladesk-flota", []);
   const [activeTab, setActiveTab] = useState("datos");
 
   const d = deceased.find((x) => x.id === id);
@@ -1932,7 +1933,24 @@ export default function DeceasedDetail() {
           </div>
           <div className="flex gap-2">
             <PDFDownloadLink
-              document={<OrdenServicioPDF record={d} />}
+              document={
+                <OrdenServicioPDF
+                  record={d}
+                  teamStaff={
+                    (d.assignedTechnicalIds ?? [])
+                      .map((uid) => users.find((u) => u.id === uid)?.fullName)
+                      .filter(Boolean) as string[]
+                  }
+                  teamVehicles={
+                    (d.assignedVehicleIds ?? [])
+                      .map((vid) => {
+                        const v = vehicles.find((x) => x.id === vid);
+                        return v ? `${v.brand} ${v.model} · ${v.plate}` : null;
+                      })
+                      .filter(Boolean) as string[]
+                  }
+                />
+              }
               fileName={`orden-servicio-${d.fullName.replace(/\s+/g, "-").toLowerCase()}.pdf`}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
               style={{

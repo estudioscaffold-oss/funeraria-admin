@@ -145,6 +145,24 @@ const s = StyleSheet.create({
   locName: { fontSize: 8.5, color: DARK },
   locAddr: { fontSize: 7.5, color: SLATE, marginTop: 2 },
 
+  /* ── team chips ── */
+  teamRow: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginTop: 2 },
+  teamChip: {
+    backgroundColor: BG,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 3,
+    paddingVertical: 3,
+    paddingHorizontal: 7,
+  },
+  teamChipText: { fontSize: 7.5, color: DARK },
+  teamCol: { width: "50%", paddingRight: 10 },
+  teamLabel: {
+    fontSize: 6.5,
+    color: SLATE_LIGHT,
+    letterSpacing: 0.7,
+    marginBottom: 5,
+  },
+
   /* ── obs box ── */
   obsBox: {
     backgroundColor: "#FFFBEB",
@@ -258,8 +276,12 @@ function Section({
 ══════════════════════════════════════════════════════ */
 export default function OrdenServicioPDF({
   record,
+  teamStaff = [],
+  teamVehicles = [],
 }: {
   record: DeceasedRecord;
+  teamStaff?: string[]; // nombres resueltos del personal técnico
+  teamVehicles?: string[]; // etiquetas resueltas de los vehículos
 }) {
   const serviceItems = (record.serviceIncludes ?? "")
     .split("\n")
@@ -386,7 +408,39 @@ export default function OrdenServicioPDF({
             )}
           </Section>
 
-          {/* 5. LUGARES */}
+          {/* 5. EQUIPO TÉCNICO Y FLOTA */}
+          {teamStaff.length > 0 || teamVehicles.length > 0 ? (
+            <Section title="Equipo Técnico y Flota Asignada">
+              <View style={{ flexDirection: "row" }}>
+                {teamStaff.length > 0 && (
+                  <View style={s.teamCol}>
+                    <Text style={s.teamLabel}>PERSONAL TÉCNICO</Text>
+                    <View style={s.teamRow}>
+                      {teamStaff.map((name, i) => (
+                        <View key={i} style={s.teamChip}>
+                          <Text style={s.teamChipText}>{name}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+                {teamVehicles.length > 0 && (
+                  <View style={s.teamCol}>
+                    <Text style={s.teamLabel}>VEHÍCULOS</Text>
+                    <View style={s.teamRow}>
+                      {teamVehicles.map((label, i) => (
+                        <View key={i} style={s.teamChip}>
+                          <Text style={s.teamChipText}>{label}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
+            </Section>
+          ) : null}
+
+          {/* 6. LUGARES */}
           {record.velatorio || record.cemetery || record.crematorium ? (
             <Section title="Lugares del Servicio">
               <View style={s.locRow}>
