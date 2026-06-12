@@ -26,7 +26,7 @@ const NAV: {
 }[] = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard", mock: false },
   { to: "/progreso", icon: Activity, label: "Progreso", mock: false },
-  { to: "/clientes", icon: ContactRound, label: "Ficha Clientes", mock: true },
+  { to: "/clientes", icon: ContactRound, label: "Ficha Clientes", mock: false },
   {
     to: "/fallecidos",
     icon: Users,

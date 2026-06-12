@@ -3,6 +3,7 @@ import type { UserRole } from "../types";
 export type NavRoute =
   | "/"
   | "/progreso"
+  | "/clientes"
   | "/fallecidos"
   | "/inventario"
   | "/personal"
@@ -24,6 +25,7 @@ export type AdminTab =
 const ALL_ROUTES: NavRoute[] = [
   "/",
   "/progreso",
+  "/clientes",
   "/fallecidos",
   "/inventario",
   "/personal",
@@ -47,7 +49,14 @@ const ALL_ADMIN_TABS: AdminTab[] = [
 const ROLE_ROUTES: Partial<Record<UserRole, NavRoute[]>> = {
   maestro: ALL_ROUTES,
   administrador: ALL_ROUTES,
-  vendedor: ["/", "/progreso", "/fallecidos", "/inventario", "/admin"],
+  vendedor: [
+    "/",
+    "/progreso",
+    "/clientes",
+    "/fallecidos",
+    "/inventario",
+    "/admin",
+  ],
   equipo_tecnico: ["/", "/progreso", "/fallecidos"],
 };
 

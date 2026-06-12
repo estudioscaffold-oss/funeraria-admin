@@ -400,3 +400,38 @@ export interface Quote {
   createdAt: string;
   validUntil: string;
 }
+
+export interface PreNeedPayment {
+  id: string;
+  date: string;
+  amount: number;
+  method: "efectivo" | "transferencia" | "debito" | "credito" | "cheque";
+  notes?: string;
+}
+
+export interface PreNeedClient {
+  id: string;
+  fullName: string;
+  rut: string;
+  birthDate?: string;
+  phone: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  serviceType: ServiceType;
+  convenioId?: string;
+  notes?: string;
+  budgetItems: BudgetItem[];
+  budgetStatus: "pendiente" | "aprobado";
+  payments: PreNeedPayment[];
+  contractSignature?: {
+    signerName: string;
+    signerRut: string;
+    signatureData: string;
+    signedAt: string;
+  };
+  status: "activo" | "convertido";
+  deceasedId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
