@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
+import { useAuth } from "./AuthContext";
 import type {
   DeceasedRecord,
   FuneralService,
@@ -119,6 +120,8 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { authUser, loading: authLoading } = useAuth();
+  const tenantId = authUser?.tenantId ?? null;
   const [loading, setLoading] = useState(IS_ONLINE);
   /* C4 — bloquea polling mientras hay escrituras en vuelo */
   const writePending = useRef(0);
@@ -250,8 +253,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     saveSucursales(sucursales.filter((x) => x.id !== id));
 
   /* ── load from Supabase on mount + polling every 3 seconds ── */
+  /* reset state when tenant changes (logout / switch account) */
   useEffect(() => {
-    if (!IS_ONLINE) return;
+    if (!IS_ONLINE || authLoading) return;
+    if (!tenantId) {
+      setDeceased([]);
+      setServices([]);
+      setUsers([]);
+      setConvenios([]);
+      setCatalog([]);
+      setInventory([]);
+      setInventoryLog([]);
+      setSucursales([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
 
     const loadAllData = async () => {
       /* C4 — no sobreescribir mientras hay escrituras pendientes */
@@ -263,18 +281,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           dbUsers.getAll(),
           dbConvenios.getAll(),
           dbCatalog.getAll(),
-          dbCollections.get<InventoryItem[]>(
-            "veladesk-inventory",
-            lsLoad("veladesk-inventory", MOCK_INVENTORY_ITEMS),
-          ),
+          dbCollections.get<InventoryItem[]>("veladesk-inventory", []),
           dbCollections.get<InventoryAuditEntry[]>(
             "veladesk-inventory-log",
             [],
           ),
-          dbCollections.get<Sucursal[]>(
-            "veladesk-sucursales",
-            lsLoad("veladesk-sucursales", MOCK_SUCURSALES),
-          ),
+          dbCollections.get<Sucursal[]>("veladesk-sucursales", []),
         ]);
         /* volver a revisar después del await por si una escritura empezó */
         if (writePending.current > 0) return;
@@ -285,12 +297,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const finalCatalog = cat.length ? cat : mockCatalog;
         setCatalog(finalCatalog);
         lsSave("veladesk-catalog", finalCatalog);
-        setInventory(inv);
-        lsSave("veladesk-inventory", inv);
+        setInventory(inv.length ? inv : MOCK_INVENTORY_ITEMS);
+        lsSave("veladesk-inventory", inv.length ? inv : MOCK_INVENTORY_ITEMS);
         setInventoryLog(invLog);
         lsSave("veladesk-inventory-log", invLog);
-        setSucursales(suc);
-        lsSave("veladesk-sucursales", suc);
+        setSucursales(suc.length ? suc : MOCK_SUCURSALES);
+        lsSave("veladesk-sucursales", suc.length ? suc : MOCK_SUCURSALES);
         setLoading(false);
       } catch (e) {
         console.error("Supabase load error:", e);
@@ -298,16 +310,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Load immediately
     void loadAllData();
 
-    // Poll every 3 seconds for real-time sync
     const pollInterval = setInterval(() => {
       void loadAllData();
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, []);
+  }, [tenantId, authLoading]);
 
   /* ── helper: update deceased + persist JSONB arrays ── */
   const updDeceased = (id: string, patch: Partial<DeceasedRecord>) => {

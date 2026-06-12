@@ -96,10 +96,12 @@ const fromDB = (r: Record<string, any>): DeceasedRecord => ({
 /* ─── deceased ─────────────────────────────────────── */
 export const dbDeceased = {
   getAll: async (): Promise<DeceasedRecord[]> => {
-    const { data, error } = await supabase
+    let q = supabase
       .from("deceased_records")
       .select("*")
       .order("created_at", { ascending: false });
+    if (currentTenantId) q = q.eq("tenant_id", currentTenantId);
+    const { data, error } = await q;
     if (error) throw error;
     return (data ?? []).map(fromDB);
   },
@@ -176,7 +178,9 @@ export const dbDeceased = {
 /* ─── funeral services ─────────────────────────────── */
 export const dbServices = {
   getAll: async (): Promise<FuneralService[]> => {
-    const { data, error } = await supabase.from("funeral_services").select("*");
+    let q = supabase.from("funeral_services").select("*");
+    if (currentTenantId) q = q.eq("tenant_id", currentTenantId);
+    const { data, error } = await q;
     if (error) throw error;
     return (data ?? []).map((r) => ({
       id: r.id,
@@ -237,10 +241,9 @@ export const dbServices = {
 /* ─── staff users ──────────────────────────────────── */
 export const dbUsers = {
   getAll: async (): Promise<AppUser[]> => {
-    const { data, error } = await supabase
-      .from("staff_users")
-      .select("*")
-      .order("full_name");
+    let q = supabase.from("staff_users").select("*").order("full_name");
+    if (currentTenantId) q = q.eq("tenant_id", currentTenantId);
+    const { data, error } = await q;
     if (error) throw error;
     return (data ?? []).map((r) => ({
       id: r.id,
@@ -285,10 +288,9 @@ export const dbUsers = {
 /* ─── convenios ────────────────────────────────────── */
 export const dbConvenios = {
   getAll: async (): Promise<Convenio[]> => {
-    const { data, error } = await supabase
-      .from("convenios")
-      .select("*")
-      .order("name");
+    let q = supabase.from("convenios").select("*").order("name");
+    if (currentTenantId) q = q.eq("tenant_id", currentTenantId);
+    const { data, error } = await q;
     if (error) throw error;
     return (data ?? []).map((r) => ({
       id: r.id,
@@ -365,10 +367,12 @@ export const dbCollections = {
 /* ─── catalog ──────────────────────────────────────── */
 export const dbCatalog = {
   getAll: async (): Promise<CatalogCategory[]> => {
-    const { data, error } = await supabase
+    let q = supabase
       .from("catalog_categories")
       .select("*")
       .order("order_index");
+    if (currentTenantId) q = q.eq("tenant_id", currentTenantId);
+    const { data, error } = await q;
     if (error) throw error;
     return (data ?? []).map((r) => ({
       id: r.id,
