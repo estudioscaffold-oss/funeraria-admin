@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Vehicle, VehicleType, VehicleStatus, VehicleDoc } from "../types";
+import { useCollection } from "../hooks/useCollection";
 import {
   Plus,
   Pencil,
@@ -598,7 +599,10 @@ const emptyVehicle = (): Omit<Vehicle, "id" | "createdAt" | "updatedAt"> => ({
 
 /* ═══ PAGE ══════════════════════════════════════════ */
 export default function Flota() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(MOCK_VEHICLES);
+  const [vehicles, setVehicles] = useCollection<Vehicle>(
+    "veladesk-flota",
+    MOCK_VEHICLES,
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -626,18 +630,20 @@ export default function Flota() {
     if (!form.brand || !form.model || !form.plate) return;
     const now = new Date().toISOString();
     if (editId)
-      setVehicles((p) =>
-        p.map((v) => (v.id === editId ? { ...v, ...form, updatedAt: now } : v)),
+      setVehicles(
+        vehicles.map((v) =>
+          v.id === editId ? { ...v, ...form, updatedAt: now } : v,
+        ),
       );
     else
-      setVehicles((p) => [
-        ...p,
+      setVehicles([
+        ...vehicles,
         { ...form, id: crypto.randomUUID(), createdAt: now, updatedAt: now },
       ]);
     setModalOpen(false);
   };
   const handleDelete = () => {
-    if (deleteId) setVehicles((p) => p.filter((v) => v.id !== deleteId));
+    if (deleteId) setVehicles(vehicles.filter((v) => v.id !== deleteId));
     setDeleteId(null);
   };
 
