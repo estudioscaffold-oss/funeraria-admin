@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -13,6 +13,7 @@ export default function Login({
   isFirstTime: boolean;
 }) {
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,8 +26,12 @@ export default function Login({
     setError(null);
     setLoading(true);
     const err = await login(email, password);
-    if (err) setError("Correo o contraseña incorrectos.");
-    setLoading(false);
+    if (err) {
+      setError("Correo o contraseña incorrectos.");
+      setLoading(false);
+    } else {
+      navigate("/");
+    }
   };
 
   return (
