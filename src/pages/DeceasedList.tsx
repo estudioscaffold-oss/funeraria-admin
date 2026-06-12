@@ -21,7 +21,9 @@ export default function DeceasedList() {
       d.fullName.toLowerCase().includes(search.toLowerCase()) ||
       d.rut.includes(search) ||
       d.familyContact.name.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter ? d.status === statusFilter : true;
+    const matchStatus = statusFilter
+      ? d.status === statusFilter
+      : d.status !== "completado";
     return matchSearch && matchStatus;
   });
 
