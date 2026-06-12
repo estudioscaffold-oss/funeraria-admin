@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
-import { useAuth } from "./AuthContext";
 import type {
   DeceasedRecord,
   FuneralService,
@@ -120,8 +119,6 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { authUser, loading: authLoading } = useAuth();
-  const tenantId = authUser?.tenantId ?? null;
   const [loading, setLoading] = useState(IS_ONLINE);
   /* C4 — bloquea polling mientras hay escrituras en vuelo */
   const writePending = useRef(0);
@@ -252,9 +249,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deleteSucursal = (id: string) =>
     saveSucursales(sucursales.filter((x) => x.id !== id));
 
-  /* ── load from Supabase — reinicia cuando cambia el tenant ── */
+  /* ── load from Supabase on mount + polling every 3 seconds ── */
   useEffect(() => {
-    if (!IS_ONLINE || authLoading) return;
+    if (!IS_ONLINE) return;
 
     const loadAllData = async () => {
       /* C4 — no sobreescribir mientras hay escrituras pendientes */
@@ -302,9 +299,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, 3000);
 
     return () => clearInterval(pollInterval);
-    // tenantId en deps → reinicia el polling cuando cambia de cuenta
-    // authLoading en deps → espera a que auth resuelva antes de cargar
-  }, [tenantId, authLoading]);
+  }, []);
 
   /* ── helper: update deceased + persist JSONB arrays ── */
   const updDeceased = (id: string, patch: Partial<DeceasedRecord>) => {
