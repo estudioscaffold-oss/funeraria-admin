@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useApp } from "../context/AppContext";
 import { useCollection } from "../hooks/useCollection";
+import { dbCollections } from "../lib/db";
 import type { ShiftAssignment, Vehicle, ProcessStatus } from "../types";
 import {
   Sun,
@@ -325,19 +326,38 @@ function CaseCard({
 export default function TecnicoPortal() {
   const { authUser, logout } = useAuth();
   const { deceased, updateDeceased } = useApp();
-  const [vehicles] = useCollection<Vehicle>("veladesk-flota", []);
-  const [shiftAssignments] = useCollection<ShiftAssignment>(
-    "veladesk-turnos",
+  const [vehicles, , vehiclesSynced] = useCollection<Vehicle>(
+    "veladesk-flota",
     [],
   );
-  const [deceasedAssignments] = useCollection<DeceasedAssignment>(
-    "veladesk-asignaciones",
-    [],
-  );
+  const [shiftAssignments, setShiftAssignments] =
+    useCollection<ShiftAssignment>("veladesk-turnos", []);
+  const [deceasedAssignments, setDeceasedAssignments] =
+    useCollection<DeceasedAssignment>("veladesk-asignaciones", []);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"casos" | "turnos">("casos");
 
-  if (!authUser) return null;
+  /* ── Polling de colecciones cada 5s (no están en AppContext) ── */
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const [asig, turnos] = await Promise.all([
+          dbCollections.get<DeceasedAssignment[]>("veladesk-asignaciones", []),
+          dbCollections.get<ShiftAssignment[]>("veladesk-turnos", []),
+        ]);
+        setDeceasedAssignments(asig);
+        setShiftAssignments(turnos);
+      } catch {
+        // silencioso — se mantiene el valor anterior
+      }
+    };
+    void poll();
+    const id = setInterval(() => void poll(), 5000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!authUser || !vehiclesSynced) return null;
 
   /* ── Casos: busco en veladesk-asignaciones ── */
   const myAssignedIds = deceasedAssignments
