@@ -137,28 +137,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     IS_ONLINE ? [] : mockConvenios,
   );
   const [catalog, setCatalog] = useState<CatalogCategory[]>(() => {
-    // Cargar desde localStorage primero
+    if (IS_ONLINE) return [];
     const saved = lsLoad<CatalogCategory[]>("veladesk-catalog", []);
     if (saved.length > 0) return saved;
-    // Primera carga: usar mockCatalog y guardarlo en localStorage como semilla inicial
-    if (!IS_ONLINE) {
-      lsSave("veladesk-catalog", mockCatalog);
-      return mockCatalog;
-    }
-    return [];
+    lsSave("veladesk-catalog", mockCatalog);
+    return mockCatalog;
   });
 
-  /* inventory + audit — localStorage + Supabase */
+  /* inventory + audit — localStorage sólo en modo offline */
   const [inventory, setInventory] = useState<InventoryItem[]>(() =>
-    lsLoad("veladesk-inventory", MOCK_INVENTORY_ITEMS),
+    IS_ONLINE ? [] : lsLoad("veladesk-inventory", MOCK_INVENTORY_ITEMS),
   );
   const [inventoryLog, setInventoryLog] = useState<InventoryAuditEntry[]>(() =>
-    lsLoad("veladesk-inventory-log", []),
+    IS_ONLINE ? [] : lsLoad("veladesk-inventory-log", []),
   );
 
-  /* sucursales — localStorage + Supabase */
+  /* sucursales — localStorage sólo en modo offline */
   const [sucursales, setSucursales] = useState<Sucursal[]>(() =>
-    lsLoad("veladesk-sucursales", MOCK_SUCURSALES),
+    IS_ONLINE ? [] : lsLoad("veladesk-sucursales", MOCK_SUCURSALES),
   );
 
   /* ── helpers ── */

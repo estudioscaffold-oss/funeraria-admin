@@ -104,6 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     setCurrentTenantId(null);
+    /* limpiar caché local para que el próximo tenant no vea datos ajenos */
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("veladesk-"))
+      .forEach((k) => localStorage.removeItem(k));
     await supabase.auth.signOut();
     setAuthUser(null);
   };

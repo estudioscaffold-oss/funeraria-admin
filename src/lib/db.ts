@@ -337,11 +337,12 @@ export function setCurrentTenantId(id: string | null) {
 /* ─── colecciones genéricas ────────────────────────── */
 export const dbCollections = {
   get: async <T>(key: string, def: T): Promise<T> => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("veladesk_collections")
       .select("data")
-      .eq("key", key)
-      .maybeSingle();
+      .eq("key", key);
+    if (currentTenantId) query = query.eq("tenant_id", currentTenantId);
+    const { data, error } = await query.maybeSingle();
     if (error || !data) return def;
     return data.data as T;
   },
