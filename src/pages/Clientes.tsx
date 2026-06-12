@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -12,6 +13,7 @@ import {
   CircleDollarSign,
   FileText,
   UserPlus,
+  ExternalLink,
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { useCollection } from "../hooks/useCollection";
@@ -1383,6 +1385,7 @@ function ClientCard({
 /* ─── Historial tab ────────────────────────────────── */
 function TabHistorial() {
   const { deceased } = useApp();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const completed = deceased
     .filter((d) => d.status === "completado")
@@ -1439,6 +1442,7 @@ function TabHistorial() {
                 <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">
                   Total pagado
                 </th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -1465,6 +1469,15 @@ function TabHistorial() {
                     </td>
                     <td className="px-4 py-3 text-right text-emerald-600 font-medium">
                       {fmt(totalPaid)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => navigate(`/fallecidos/${d.id}`)}
+                        title="Ver ficha completa"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 text-slate-600 hover:bg-navy-900 hover:text-white hover:border-navy-900 transition-all"
+                      >
+                        <ExternalLink size={12} /> Ver ficha
+                      </button>
                     </td>
                   </tr>
                 );
