@@ -42,12 +42,12 @@ export function useAuth() {
 async function fetchProfile(user: User): Promise<AuthUser | null> {
   const { data } = await supabase
     .from("staff_users")
-    .select("full_name,role,deceased_id")
+    .select("id,full_name,role,deceased_id")
     .eq("email", user.email)
     .maybeSingle();
   if (!data) return null;
   return {
-    id: user.id,
+    id: data.id, // ID de staff_users (el mismo que usan las asignaciones)
     email: user.email ?? "",
     fullName: data.full_name,
     role: data.role as UserRole,
