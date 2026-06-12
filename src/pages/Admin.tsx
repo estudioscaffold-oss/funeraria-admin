@@ -562,13 +562,19 @@ function TabUsuarios() {
       }
       // Crear cuenta en Supabase Auth sin afectar la sesión actual
       const { createAuthUser } = await import("../lib/auth");
-      const { error: authErr } = await createAuthUser(form.email, tempPassword);
-      if (authErr) {
-        setSaveError(`Error al crear acceso: ${authErr}`);
+      const { userId, error: authErr } = await createAuthUser(
+        form.email,
+        tempPassword,
+      );
+      if (authErr || !userId) {
+        setSaveError(
+          `Error al crear acceso: ${authErr ?? "sin ID de usuario"}`,
+        );
         setSaving(false);
         return;
       }
-      addUser(form);
+      /* C2 — usar el UUID de Auth como id en staff_users para que coincidan */
+      addUser({ ...form, id: userId });
     } else {
       updateUser(form.id, form);
     }

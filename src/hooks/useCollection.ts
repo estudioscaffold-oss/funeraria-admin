@@ -25,7 +25,7 @@ function lsSave<T>(key: string, v: T) {
 export function useCollection<T>(
   key: string,
   defaultValue: T[],
-): [T[], (next: T[]) => void, boolean] {
+): [T[], (next: T[] | ((prev: T[]) => T[])) => void, boolean] {
   const [data, setData] = useState<T[]>(() => lsLoad(key, defaultValue));
   const [synced, setSynced] = useState(false);
 
@@ -47,12 +47,18 @@ export function useCollection<T>(
   }, [key]);
 
   const save = useCallback(
-    (next: T[]) => {
-      setData(next);
-      lsSave(key, next);
-      if (IS_ONLINE) {
-        dbCollections.set(key, next).catch(console.error);
-      }
+    (nextOrUpdater: T[] | ((prev: T[]) => T[])) => {
+      setData((prev) => {
+        const next =
+          typeof nextOrUpdater === "function"
+            ? nextOrUpdater(prev)
+            : nextOrUpdater;
+        lsSave(key, next);
+        if (IS_ONLINE) {
+          dbCollections.set(key, next).catch(console.error);
+        }
+        return next;
+      });
     },
     [key],
   );

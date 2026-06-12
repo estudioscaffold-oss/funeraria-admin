@@ -1167,7 +1167,13 @@ function TabPresupuesto({
 }: {
   d: ReturnType<typeof useApp>["deceased"][0];
 }) {
-  const { addBudget, updateBudget, deleteBudget } = useApp();
+  const {
+    addBudget,
+    updateBudget,
+    deleteBudget,
+    stockWarnings,
+    clearStockWarnings,
+  } = useApp();
 
   // null = lista, "new" = crear, DeceasedBudget = editar
   const [editing, setEditing] = useState<DeceasedBudget | "new" | null>(null);
@@ -1236,6 +1242,35 @@ function TabPresupuesto({
   /* ── vista lista ── */
   return (
     <div className="space-y-4">
+      {/* C3 — aviso de items sin coincidencia en inventario */}
+      {stockWarnings.length > 0 && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <span className="text-amber-500 text-base mt-0.5">⚠️</span>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-800">
+              Stock no descontado — items sin coincidencia en inventario
+            </p>
+            <ul className="mt-1 space-y-0.5">
+              {stockWarnings.map((name) => (
+                <li key={name} className="text-xs text-amber-700">
+                  · {name}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-amber-600 mt-1">
+              Verifica que el nombre coincida exactamente con el ítem en
+              inventario.
+            </p>
+          </div>
+          <button
+            onClick={clearStockWarnings}
+            className="text-amber-400 hover:text-amber-600 text-xs shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* toolbar */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-500">
@@ -1706,7 +1741,7 @@ interface DeceasedAssignment {
 }
 
 export function useDeceasedAssignment(deceasedId: string) {
-  const [all, setAll] = useCollection<DeceasedAssignment>(
+  const [all, setAll, synced] = useCollection<DeceasedAssignment>(
     "veladesk-asignaciones",
     [],
   );
@@ -1716,28 +1751,56 @@ export function useDeceasedAssignment(deceasedId: string) {
     vehicleIds: [],
   };
 
+  /* usa el updater funcional de setAll para evitar race conditions
+     entre escrituras concurrentes del mismo caso */
   const setMine = (patch: Partial<Omit<DeceasedAssignment, "deceasedId">>) => {
-    const updated = { ...mine, ...patch };
-    const exists = all.some((a) => a.deceasedId === deceasedId);
-    setAll(
-      exists
-        ? all.map((a) => (a.deceasedId === deceasedId ? updated : a))
-        : [...all, updated],
-    );
+    setAll((prev) => {
+      const current = prev.find((a) => a.deceasedId === deceasedId) ?? {
+        deceasedId,
+        technicalIds: [],
+        vehicleIds: [],
+      };
+      const updated = { ...current, ...patch };
+      const exists = prev.some((a) => a.deceasedId === deceasedId);
+      return exists
+        ? prev.map((a) => (a.deceasedId === deceasedId ? updated : a))
+        : [...prev, updated];
+    });
   };
 
-  return { assignment: mine, setMine };
+  return { assignment: mine, setMine, synced };
 }
 
 /* ─── TAB: Equipo & Flota ─────────────────────────── */
 function TabEquipo({ d }: { d: ReturnType<typeof useApp>["deceased"][0] }) {
   const { users } = useApp();
   const [vehicles] = useCollection<Vehicle>("veladesk-flota", MOCK_VEHICLES);
-  const { assignment, setMine } = useDeceasedAssignment(d.id);
+  const { assignment, setMine, synced } = useDeceasedAssignment(d.id);
 
   const tecnicos = users.filter((u) => u.role === "equipo_tecnico" && u.active);
   const assigned = assignment.technicalIds;
   const assignedVeh = assignment.vehicleIds;
+
+  /* M1 — mientras llegan datos de Supabase mostrar skeleton */
+  if (!synced) {
+    return (
+      <div className="space-y-4 max-w-2xl animate-pulse">
+        {[1, 2].map((i) => (
+          <div
+            key={i}
+            className="bg-white rounded-xl border border-slate-200 p-5"
+          >
+            <div className="h-4 bg-slate-100 rounded w-1/3 mb-4" />
+            <div className="space-y-2">
+              {[1, 2, 3].map((j) => (
+                <div key={j} className="h-10 bg-slate-50 rounded-lg" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const toggleTecnico = (uid: string) => {
     setMine({

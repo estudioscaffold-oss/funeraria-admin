@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import type {
   DeceasedRecord,
@@ -111,12 +111,20 @@ interface AppContextType {
   addConvenio: (c: Convenio) => void;
   updateConvenio: (id: string, c: Partial<Convenio>) => void;
   deleteConvenio: (id: string) => void;
+  /* stock warnings — items del presupuesto sin match en inventario */
+  stockWarnings: string[];
+  clearStockWarnings: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(IS_ONLINE);
+  /* C4 — bloquea polling mientras hay escrituras en vuelo */
+  const writePending = useRef(0);
+  /* C3 — items del presupuesto sin coincidencia en inventario */
+  const [stockWarnings, setStockWarnings] = useState<string[]>([]);
+  const clearStockWarnings = () => setStockWarnings([]);
   const [deceased, setDeceased] = useState<DeceasedRecord[]>(
     IS_ONLINE ? [] : mockDeceased,
   );
@@ -250,6 +258,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!IS_ONLINE) return;
 
     const loadAllData = async () => {
+      /* C4 — no sobreescribir mientras hay escrituras pendientes */
+      if (writePending.current > 0) return;
       try {
         const [dec, svc, usr, conv, cat, inv, invLog, suc] = await Promise.all([
           dbDeceased.getAll(),
@@ -270,6 +280,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             lsLoad("veladesk-sucursales", MOCK_SUCURSALES),
           ),
         ]);
+        /* volver a revisar después del await por si una escritura empezó */
+        if (writePending.current > 0) return;
         setDeceased(dec);
         setServices(svc);
         setUsers(usr);
@@ -311,9 +323,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ),
     );
     if (IS_ONLINE) {
+      writePending.current += 1;
       dbDeceased
         .update(id, { ...patch, updatedAt: new Date().toISOString() })
-        .catch((e) => console.error("update deceased:", e));
+        .catch((e) => console.error("update deceased:", e))
+        .finally(() => {
+          writePending.current = Math.max(0, writePending.current - 1);
+        });
     }
   };
 
@@ -326,8 +342,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateDeceased = updDeceased;
   const deleteDeceased = (id: string) => {
     setDeceased((p) => p.filter((d) => d.id !== id));
-    if (IS_ONLINE)
+    if (IS_ONLINE) {
       dbDeceased.delete(id).catch((e) => console.error("delete deceased:", e));
+      /* C1 — limpiar asignaciones huérfanas en veladesk-asignaciones */
+      dbCollections
+        .get<{ deceasedId: string }[]>("veladesk-asignaciones", [])
+        .then((all) => {
+          const filtered = all.filter((a) => a.deceasedId !== id);
+          if (filtered.length !== all.length)
+            dbCollections
+              .set("veladesk-asignaciones", filtered)
+              .catch(console.error);
+        })
+        .catch(console.error);
+    }
   };
 
   /* ── services ── */
@@ -360,6 +388,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deductStockForBudget = (b: DeceasedBudget, deceasedName: string) => {
     if (b.status !== "aprobado") return;
 
+    const unmatched: string[] = [];
+
     setInventory((prevInv) => {
       let next = [...prevInv];
       const logEntries: Omit<InventoryAuditEntry, "id" | "date">[] = [];
@@ -371,7 +401,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const idx = next.findIndex(
           (inv) => inv.name.trim().toLowerCase() === nameToMatch,
         );
-        if (idx === -1) return; // no hay coincidencia en inventario
+        if (idx === -1) {
+          /* C3 — registrar item sin coincidencia en inventario */
+          unmatched.push(budgetItem.description);
+          return;
+        }
 
         const inv = next[idx];
         const newQty = Math.max(0, inv.quantity - budgetItem.quantity);
@@ -408,6 +442,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       return next;
     });
+
+    /* C3 — avisar de items sin coincidencia (fuera de setInventory para evitar setState anidado) */
+    if (unmatched.length > 0) {
+      setStockWarnings(unmatched);
+    }
   };
 
   /* ── budgets (stored inside deceased JSONB) ── */
@@ -635,6 +674,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addSucursal,
         updateSucursal,
         deleteSucursal,
+        stockWarnings,
+        clearStockWarnings,
       }}
     >
       {children}
