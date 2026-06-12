@@ -16,8 +16,14 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { USER_ROLE_LABELS } from "../../utils/mockData";
+import { getAllowedRoutes, type NavRoute } from "../../lib/permissions";
 
-const NAV = [
+const NAV: {
+  to: string;
+  icon: typeof LayoutDashboard;
+  label: string;
+  mock: boolean;
+}[] = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard", mock: false },
   { to: "/progreso", icon: Activity, label: "Progreso", mock: false },
   { to: "/clientes", icon: ContactRound, label: "Ficha Clientes", mock: true },
@@ -113,8 +119,17 @@ function VelodeskLogo() {
 
 export default function Sidebar() {
   const location = useLocation();
+  const { authUser } = useAuth();
   const [companyLogo, setCompanyLogo] = useState<string>("");
   const [companyName, setCompanyName] = useState<string>("");
+
+  const allowedRoutes = authUser
+    ? new Set<string>(getAllowedRoutes(authUser.role))
+    : new Set<string>();
+
+  const visibleNav = NAV.filter(
+    (item) => item.mock || allowedRoutes.has(item.to as NavRoute),
+  );
 
   // Lee el logo y nombre guardados en localStorage desde Admin > Perfil
   useEffect(() => {
@@ -189,7 +204,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto py-2">
-        {NAV.map(({ to, icon: Icon, label, mock }) => {
+        {visibleNav.map(({ to, icon: Icon, label, mock }) => {
           const isActive =
             !mock &&
             (to === "/"

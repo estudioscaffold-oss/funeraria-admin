@@ -486,6 +486,8 @@ import { USER_ROLE_LABELS, USER_ROLE_COLORS } from "../utils/mockData";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { applyTheme, THEMES, type ThemeKey } from "../lib/theme";
+import { getAllowedAdminTabs } from "../lib/permissions";
+import { useAuth } from "../context/AuthContext";
 
 const TABS = [
   { id: "perfil", label: "Perfil", icon: Building2 },
@@ -4503,7 +4505,22 @@ function TabDestinos() {
    MAIN
    ════════════════════════════════════════════════════ */
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState("perfil");
+  const { authUser } = useAuth();
+  const allowedTabs = getAllowedAdminTabs(authUser?.role ?? "vendedor");
+  const visibleTabs = TABS.filter((t) =>
+    allowedTabs.includes(t.id as (typeof allowedTabs)[number]),
+  );
+  const [activeTab, setActiveTab] = useState(
+    () => visibleTabs[0]?.id ?? "perfil",
+  );
+
+  if (visibleTabs.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+        No tienes acceso a esta sección.
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen">
@@ -4516,7 +4533,7 @@ export default function Admin() {
           </p>
         </div>
         <div className="flex gap-1 -mb-px overflow-x-auto">
-          {TABS.map(({ id, label, icon: Icon }) => (
+          {visibleTabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setActiveTab(id)}

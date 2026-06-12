@@ -1,3 +1,4 @@
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -18,6 +19,8 @@ import Flota from "./pages/Flota";
 import Inventario from "./pages/Inventario";
 import Login from "./pages/Login";
 import FamiliaPortal from "./pages/FamiliaPortal";
+import { getAllowedRoutes, type NavRoute } from "./lib/permissions";
+import { Navigate, useLocation } from "react-router-dom";
 
 /* ── Pantalla de carga ───────────────────────────── */
 function LoadingScreen() {
@@ -142,21 +145,66 @@ function AppRoutes() {
     return <NoPerfil onLogout={() => supabase.auth.signOut()} />;
   }
 
+  const allowed = new Set<string>(getAllowedRoutes(authUser!.role));
+
+  function Guard({
+    route,
+    element,
+  }: {
+    route: NavRoute;
+    element: React.ReactElement;
+  }) {
+    const loc = useLocation();
+    if (!allowed.has(route))
+      return <Navigate to="/" replace state={{ from: loc }} />;
+    return element;
+  }
+
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/progreso" element={<Progress />} />
-          <Route path="/fallecidos" element={<DeceasedList />} />
-          <Route path="/fallecidos/nuevo" element={<DeceasedForm />} />
-          <Route path="/fallecidos/:id" element={<DeceasedDetail />} />
-          <Route path="/fallecidos/:id/editar" element={<DeceasedForm />} />
-          <Route path="/personal" element={<Personal />} />
-          <Route path="/finanzas" element={<Finanzas />} />
-          <Route path="/flota" element={<Flota />} />
-          <Route path="/inventario" element={<Inventario />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route
+            path="/progreso"
+            element={<Guard route="/progreso" element={<Progress />} />}
+          />
+          <Route
+            path="/fallecidos"
+            element={<Guard route="/fallecidos" element={<DeceasedList />} />}
+          />
+          <Route
+            path="/fallecidos/nuevo"
+            element={<Guard route="/fallecidos" element={<DeceasedForm />} />}
+          />
+          <Route
+            path="/fallecidos/:id"
+            element={<Guard route="/fallecidos" element={<DeceasedDetail />} />}
+          />
+          <Route
+            path="/fallecidos/:id/editar"
+            element={<Guard route="/fallecidos" element={<DeceasedForm />} />}
+          />
+          <Route
+            path="/personal"
+            element={<Guard route="/personal" element={<Personal />} />}
+          />
+          <Route
+            path="/finanzas"
+            element={<Guard route="/finanzas" element={<Finanzas />} />}
+          />
+          <Route
+            path="/flota"
+            element={<Guard route="/flota" element={<Flota />} />}
+          />
+          <Route
+            path="/inventario"
+            element={<Guard route="/inventario" element={<Inventario />} />}
+          />
+          <Route
+            path="/admin"
+            element={<Guard route="/admin" element={<Admin />} />}
+          />
         </Route>
       </Routes>
     </BrowserRouter>

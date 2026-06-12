@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { useApp } from "../context/AppContext";
+import { useAuth } from "../context/AuthContext";
+import { canWrite } from "../lib/permissions";
 import type { InventoryItem, InventoryCategory } from "../types";
 import {
   Plus,
@@ -434,6 +436,8 @@ export default function Inventario() {
     updateInventoryItem,
     deleteInventoryItem,
   } = useApp();
+  const { authUser } = useAuth();
+  const readOnly = !canWrite(authUser?.role ?? "vendedor", "inventario");
   const items = inventory;
 
   const [formOpen, setFormOpen] = useState(false);
@@ -502,17 +506,19 @@ export default function Inventario() {
             {items.length} ítems · {kpis.categories} categorías
           </p>
         </div>
-        <button
-          onClick={() => {
-            setEditItem(null);
-            setFormOpen(true);
-          }}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm btn-gold"
-        >
-          <span className="relative z-10 flex items-center gap-2">
-            <Plus size={16} /> Nuevo insumo
-          </span>
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => {
+              setEditItem(null);
+              setFormOpen(true);
+            }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm btn-gold"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              <Plus size={16} /> Nuevo insumo
+            </span>
+          </button>
+        )}
       </div>
 
       {/* KPIs — sin precios */}
@@ -659,23 +665,25 @@ export default function Inventario() {
                         {item.location || "—"}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1 justify-end">
-                          <button
-                            onClick={() => {
-                              setEditItem(item);
-                              setFormOpen(true);
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                          >
-                            <Pencil size={13} />
-                          </button>
-                          <button
-                            onClick={() => setDeleteId(item.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
+                        {!readOnly && (
+                          <div className="flex items-center gap-1 justify-end">
+                            <button
+                              onClick={() => {
+                                setEditItem(item);
+                                setFormOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            >
+                              <Pencil size={13} />
+                            </button>
+                            <button
+                              onClick={() => setDeleteId(item.id)}
+                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -706,10 +714,12 @@ export default function Inventario() {
               .map((i) => (
                 <div
                   key={i.id}
-                  className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white border border-amber-100 cursor-pointer hover:border-amber-200 transition-colors"
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl bg-white border border-amber-100 transition-colors ${!readOnly ? "cursor-pointer hover:border-amber-200" : ""}`}
                   onClick={() => {
-                    setEditItem(i);
-                    setFormOpen(true);
+                    if (!readOnly) {
+                      setEditItem(i);
+                      setFormOpen(true);
+                    }
                   }}
                 >
                   <div>
@@ -723,7 +733,9 @@ export default function Inventario() {
                       {i.quantity} {i.unit} · mín. {i.minStock}
                     </p>
                   </div>
-                  <Pencil size={12} style={{ color: "#D97706" }} />
+                  {!readOnly && (
+                    <Pencil size={12} style={{ color: "#D97706" }} />
+                  )}
                 </div>
               ))}
           </div>
