@@ -1383,70 +1383,96 @@ function ClientCard({
 /* ─── Historial tab ────────────────────────────────── */
 function TabHistorial() {
   const { deceased } = useApp();
-  const completed = deceased.filter((d) => d.status === "completado");
-
-  if (completed.length === 0) {
-    return (
-      <div className="text-center py-16 text-slate-400">
-        <p className="text-sm">No hay servicios completados aún.</p>
-      </div>
+  const [search, setSearch] = useState("");
+  const completed = deceased
+    .filter((d) => d.status === "completado")
+    .filter(
+      (d) =>
+        search === "" ||
+        d.fullName.toLowerCase().includes(search.toLowerCase()) ||
+        d.rut.toLowerCase().includes(search.toLowerCase()),
     );
-  }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200">
-      <table className="w-full text-sm">
-        <thead className="bg-slate-50">
-          <tr>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
-              Fallecido
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
-              RUT
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
-              Servicio
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
-              Fallecimiento
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">
-              Total pres.
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">
-              Total pagado
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {completed.map((d) => {
-            const budgetTotal = d.budgets.reduce(
-              (s, b) =>
-                s + b.items.reduce((bs, i) => bs + i.quantity * i.unitPrice, 0),
-              0,
-            );
-            const totalPaid = d.payments.reduce((s, p) => s + p.amount, 0);
-            return (
-              <tr key={d.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-800">
-                  {d.fullName}
-                </td>
-                <td className="px-4 py-3 text-slate-500">{d.rut}</td>
-                <td className="px-4 py-3 text-slate-500">
-                  {SERVICE_LABELS[d.serviceType] ?? d.serviceType}
-                </td>
-                <td className="px-4 py-3 text-slate-500">{d.deathDate}</td>
-                <td className="px-4 py-3 text-right text-slate-700">
-                  {fmt(budgetTotal)}
-                </td>
-                <td className="px-4 py-3 text-right text-emerald-600 font-medium">
-                  {fmt(totalPaid)}
-                </td>
+    <div className="space-y-4">
+      <div className="relative max-w-sm">
+        <Search
+          size={15}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+        />
+        <input
+          className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+          placeholder="Buscar por nombre o RUT…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {completed.length === 0 ? (
+        <div className="text-center py-16 text-slate-400">
+          <p className="text-sm">
+            {search
+              ? "No se encontraron registros con ese criterio"
+              : "No hay servicios completados aún."}
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                  Fallecido
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                  RUT
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                  Servicio
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                  Fallecimiento
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">
+                  Total pres.
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">
+                  Total pagado
+                </th>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {completed.map((d) => {
+                const budgetTotal = d.budgets.reduce(
+                  (s, b) =>
+                    s +
+                    b.items.reduce((bs, i) => bs + i.quantity * i.unitPrice, 0),
+                  0,
+                );
+                const totalPaid = d.payments.reduce((s, p) => s + p.amount, 0);
+                return (
+                  <tr key={d.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-medium text-slate-800">
+                      {d.fullName}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500">{d.rut}</td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {SERVICE_LABELS[d.serviceType] ?? d.serviceType}
+                    </td>
+                    <td className="px-4 py-3 text-slate-500">{d.deathDate}</td>
+                    <td className="px-4 py-3 text-right text-slate-700">
+                      {fmt(budgetTotal)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-emerald-600 font-medium">
+                      {fmt(totalPaid)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
