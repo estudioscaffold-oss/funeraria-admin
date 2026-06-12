@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
+import { useCollection } from "../hooks/useCollection";
 import {
   ChevronLeft,
   Save,
@@ -11,11 +12,8 @@ import {
   Cross,
   MapPin,
   Building2,
-  Plus,
-  Pencil,
-  Trash2,
-  Check,
-  X,
+  FileCheck,
+  Stethoscope,
 } from "lucide-react";
 import type { DeceasedRecord } from "../types";
 import {
@@ -23,6 +21,28 @@ import {
   STATUS_LABELS,
   RELIGIOUS_LABELS,
 } from "../utils/mockData";
+
+interface Doctor {
+  id: string;
+  fullName: string;
+  rut?: string;
+  specialty?: string;
+  institution?: string;
+  phone?: string;
+  email?: string;
+  region?: string;
+  city?: string;
+}
+
+/* ── RUT formatter: "123456789" → "12.345.678-9" ── */
+function formatRut(raw: string): string {
+  const clean = raw.replace(/[^0-9kK]/g, "").toUpperCase();
+  if (clean.length < 2) return clean;
+  const body = clean.slice(0, -1);
+  const dv = clean.slice(-1);
+  const grouped = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${grouped}-${dv}`;
+}
 
 /* ── empty form ─────────────────────────────── */
 const empty: Omit<DeceasedRecord, "id" | "createdAt" | "updatedAt"> = {
@@ -175,7 +195,8 @@ const PREVISION = [
 export default function DeceasedForm() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { deceased, addDeceased, updateDeceased, sucursales } = useApp();
+  const { deceased, addDeceased, updateDeceased, sucursales, users } = useApp();
+  const [medicos] = useCollection<Doctor>("veladesk-medicos", []);
 
   const existing =
     id && id !== "nuevo" ? deceased.find((d) => d.id === id) : null;
@@ -183,34 +204,12 @@ export default function DeceasedForm() {
     Omit<DeceasedRecord, "id" | "createdAt" | "updatedAt">
   >(existing ?? empty);
   const [saved, setSaved] = useState(false);
-
-  /* ── service items list ── */
-  const [serviceItems, setServiceItems] = useState<string[]>(() =>
-    (existing?.serviceIncludes ?? "").split("\n").filter(Boolean),
+  const [hasCertificate, setHasCertificate] = useState<boolean | null>(
+    existing ? (existing.deathCause ? true : null) : null,
   );
-  const [newItem, setNewItem] = useState("");
-  const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  const [editingVal, setEditingVal] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const addItem = () => {
-    const v = newItem.trim();
-    if (!v) return;
-    setServiceItems((prev) => [...prev, v]);
-    setNewItem("");
-  };
-  const startEdit = (idx: number) => {
-    setEditingIdx(idx);
-    setEditingVal(serviceItems[idx]);
-  };
-  const confirmEdit = () => {
-    if (editingIdx === null) return;
-    const v = editingVal.trim();
-    if (v)
-      setServiceItems((prev) => prev.map((x, i) => (i === editingIdx ? v : x)));
-    setEditingIdx(null);
-  };
-  const removeItem = (idx: number) =>
-    setServiceItems((prev) => prev.filter((_, i) => i !== idx));
+  const vendedores = users.filter((u) => u.role === "vendedor" && u.active);
 
   const set = (key: keyof typeof form, value: unknown) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -221,9 +220,34 @@ export default function DeceasedForm() {
       familyContact: { ...f.familyContact, [key]: value },
     }));
 
+  const handleRut = (raw: string, field: "rut" | "contactRut") => {
+    const formatted = formatRut(raw);
+    if (field === "rut") set("rut", formatted);
+    else setContact("rut", formatted);
+  };
+
+  const validate = (): boolean => {
+    const e: Record<string, string> = {};
+    if (!form.fullName.trim().includes(" "))
+      e.fullName = "Ingresa nombres y apellidos completos";
+    if (!form.rut) e.rut = "RUT obligatorio";
+    if (!form.familyContact.name.trim().includes(" "))
+      e.contactName = "Ingresa nombres y apellidos completos";
+    if (!form.familyContact.rut) e.contactRut = "RUT obligatorio";
+    if (
+      form.familyContact.email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.familyContact.email)
+    )
+      e.contactEmail = "Formato de correo inválido";
+    if (!form.deathDate) e.deathDate = "Fecha de fallecimiento obligatoria";
+    if (!form.deathCause) e.deathCause = "Causa de fallecimiento obligatoria";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSave = () => {
-    if (!form.fullName || !form.rut || !form.deathDate) return;
-    const record = { ...form, serviceIncludes: serviceItems.join("\n") };
+    if (!validate()) return;
+    const record = { ...form };
     if (existing) {
       updateDeceased(existing.id, record);
     } else {
@@ -277,13 +301,19 @@ export default function DeceasedForm() {
                 ))}
             </select>
           </Field>
-          <Field label="Personal asignado">
-            <input
+          <Field label="Personal asignado (vendedor)">
+            <select
               className={icFocus}
               value={form.assignedStaff ?? ""}
               onChange={(e) => set("assignedStaff", e.target.value)}
-              placeholder="Nombre del funcionario responsable"
-            />
+            >
+              <option value="">— Seleccionar vendedor —</option>
+              {vendedores.map((u) => (
+                <option key={u.id} value={u.fullName}>
+                  {u.fullName}
+                </option>
+              ))}
+            </select>
           </Field>
         </div>
       </Section>
@@ -297,21 +327,27 @@ export default function DeceasedForm() {
         <div className="grid grid-cols-2 gap-4">
           <Field label="Nombre completo" required>
             <input
-              className={icFocus}
+              className={`${icFocus} ${errors.contactName ? "border-red-400 focus:ring-red-300" : ""}`}
               value={form.familyContact.name}
               onChange={(e) => setContact("name", e.target.value)}
               placeholder="Nombres y apellidos completos"
             />
+            {errors.contactName && (
+              <p className="text-xs text-red-500 mt-1">{errors.contactName}</p>
+            )}
           </Field>
-          <Field label="RUT">
+          <Field label="RUT" required>
             <input
-              className={icFocus}
+              className={`${icFocus} ${errors.contactRut ? "border-red-400 focus:ring-red-300" : ""}`}
               value={form.familyContact.rut}
-              onChange={(e) => setContact("rut", e.target.value)}
+              onChange={(e) => handleRut(e.target.value, "contactRut")}
               placeholder="12.345.678-9"
             />
+            {errors.contactRut && (
+              <p className="text-xs text-red-500 mt-1">{errors.contactRut}</p>
+            )}
           </Field>
-          <Field label="Teléfono">
+          <Field label="Teléfono" required>
             <input
               className={icFocus}
               value={form.familyContact.phone}
@@ -319,16 +355,19 @@ export default function DeceasedForm() {
               placeholder="+56 9 1234 5678"
             />
           </Field>
-          <Field label="Correo electrónico">
+          <Field label="Correo electrónico" required>
             <input
               type="email"
-              className={icFocus}
+              className={`${icFocus} ${errors.contactEmail ? "border-red-400 focus:ring-red-300" : ""}`}
               value={form.familyContact.email}
               onChange={(e) => setContact("email", e.target.value)}
               placeholder="correo@email.com"
             />
+            {errors.contactEmail && (
+              <p className="text-xs text-red-500 mt-1">{errors.contactEmail}</p>
+            )}
           </Field>
-          <Field label="Dirección" span2>
+          <Field label="Dirección" span2 required>
             <input
               className={icFocus}
               value={form.familyContact.address}
@@ -336,7 +375,7 @@ export default function DeceasedForm() {
               placeholder="Calle, número, comuna, ciudad"
             />
           </Field>
-          <Field label="Parentesco con el fallecido">
+          <Field label="Parentesco con el fallecido" required>
             <input
               className={icFocus}
               value={form.familyContact.relationship}
@@ -353,19 +392,25 @@ export default function DeceasedForm() {
           {/* identificación */}
           <Field label="Nombre completo" required span2>
             <input
-              className={icFocus}
+              className={`${icFocus} ${errors.fullName ? "border-red-400 focus:ring-red-300" : ""}`}
               value={form.fullName}
               onChange={(e) => set("fullName", e.target.value)}
               placeholder="Nombres y apellidos completos"
             />
+            {errors.fullName && (
+              <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>
+            )}
           </Field>
           <Field label="RUT" required>
             <input
-              className={icFocus}
+              className={`${icFocus} ${errors.rut ? "border-red-400 focus:ring-red-300" : ""}`}
               value={form.rut}
-              onChange={(e) => set("rut", e.target.value)}
+              onChange={(e) => handleRut(e.target.value, "rut")}
               placeholder="12.345.678-9"
             />
+            {errors.rut && (
+              <p className="text-xs text-red-500 mt-1">{errors.rut}</p>
+            )}
           </Field>
           <Field label="Nacionalidad">
             <input
@@ -398,14 +443,95 @@ export default function DeceasedForm() {
               onChange={(e) => set("deathTime", e.target.value)}
             />
           </Field>
-          <Field label="Causa de fallecimiento" span2>
-            <input
-              className={icFocus}
-              value={form.deathCause ?? ""}
-              onChange={(e) => set("deathCause", e.target.value)}
-              placeholder="Diagnóstico o causa de muerte"
-            />
-          </Field>
+          {/* Certificado de defunción */}
+          <div className="col-span-2 space-y-3">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">
+              Certificado de defunción{" "}
+              <span className="text-red-400 normal-case font-normal">*</span>
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setHasCertificate(true)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${hasCertificate === true ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-500 hover:border-slate-300"}`}
+              >
+                <FileCheck size={15} /> Sí cuenta con certificado
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setHasCertificate(false);
+                  set("deathCause", "");
+                }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${hasCertificate === false ? "border-amber-400 bg-amber-50 text-amber-700" : "border-slate-200 text-slate-500 hover:border-slate-300"}`}
+              >
+                <Stethoscope size={15} /> No tiene certificado aún
+              </button>
+            </div>
+
+            {hasCertificate === true && (
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">
+                  Causa de fallecimiento (según certificado){" "}
+                  <span className="text-red-400">*</span>
+                </label>
+                <input
+                  className={`${icFocus} ${errors.deathCause ? "border-red-400 focus:ring-red-300" : ""}`}
+                  value={form.deathCause ?? ""}
+                  onChange={(e) => set("deathCause", e.target.value)}
+                  placeholder="Causa exacta como aparece en el certificado de defunción"
+                />
+                {errors.deathCause && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.deathCause}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {hasCertificate === false && (
+              <div className="space-y-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                <p className="text-xs text-amber-700 font-medium flex items-center gap-1.5">
+                  <Stethoscope size={13} /> Sin certificado — asignar médico
+                  para emisión
+                </p>
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1.5">
+                    Médico asignado <span className="text-red-400">*</span>
+                  </label>
+                  {medicos.length === 0 ? (
+                    <p className="text-xs text-amber-600 italic">
+                      No hay médicos en la base de datos. Agrégalos en
+                      Administrador → Base de Médicos.
+                    </p>
+                  ) : (
+                    <select
+                      className={icFocus}
+                      value={form.deathCause ?? ""}
+                      onChange={(e) => set("deathCause", e.target.value)}
+                    >
+                      <option value="">— Seleccionar médico —</option>
+                      {medicos.map((m) => (
+                        <option
+                          key={m.id}
+                          value={`Pendiente cert. — Dr/a. ${m.fullName}${m.institution ? ` (${m.institution})` : ""}`}
+                        >
+                          {m.fullName}
+                          {m.specialty ? ` · ${m.specialty}` : ""}
+                          {m.institution ? ` · ${m.institution}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {errors.deathCause && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.deathCause}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <Field label="Lugar de fallecimiento" span2>
             <input
               className={icFocus}
@@ -543,101 +669,6 @@ export default function DeceasedForm() {
               ))}
             </select>
           </Field>
-
-          {/* desglose */}
-          <div className="col-span-2 space-y-2">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">
-              Desglose del servicio contratado
-            </label>
-
-            {/* items list */}
-            {serviceItems.length > 0 && (
-              <ul className="space-y-1.5 mb-2">
-                {serviceItems.map((item, idx) => (
-                  <li
-                    key={idx}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50"
-                  >
-                    {editingIdx === idx ? (
-                      <>
-                        <input
-                          className={`${icFocus} flex-1 py-1.5`}
-                          value={editingVal}
-                          onChange={(e) => setEditingVal(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") confirmEdit();
-                            if (e.key === "Escape") setEditingIdx(null);
-                          }}
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          onClick={confirmEdit}
-                          className="p-1 rounded hover:bg-emerald-50 text-emerald-600 transition-colors"
-                        >
-                          <Check size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingIdx(null)}
-                          className="p-1 rounded hover:bg-slate-100 text-slate-400 transition-colors"
-                        >
-                          <X size={14} />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <span className="flex-1 text-sm text-slate-700">
-                          {item}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => startEdit(idx)}
-                          className="p-1 rounded hover:bg-yellow-50 transition-colors"
-                          style={{ color: "#A07840" }}
-                        >
-                          <Pencil size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeItem(idx)}
-                          className="p-1 rounded hover:bg-red-50 text-red-400 transition-colors"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {/* add new item */}
-            <div className="flex gap-2">
-              <input
-                className={`${icFocus} flex-1`}
-                value={newItem}
-                onChange={(e) => setNewItem(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addItem();
-                  }
-                }}
-                placeholder="Ej: Ataúd modelo X, traslado, corona floral…"
-              />
-              <button
-                type="button"
-                onClick={addItem}
-                disabled={!newItem.trim()}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-yellow-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-yellow-50"
-                style={{ color: "#A07840" }}
-              >
-                <Plus size={14} />
-                Agregar
-              </button>
-            </div>
-          </div>
 
           {/* velatorio */}
           <div className="col-span-2">
@@ -809,7 +840,7 @@ export default function DeceasedForm() {
         </button>
         <button
           onClick={handleSave}
-          disabled={!form.fullName || !form.rut || !form.deathDate}
+          disabled={saved}
           className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold btn-gold disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <span className="relative z-10 flex items-center gap-2">
