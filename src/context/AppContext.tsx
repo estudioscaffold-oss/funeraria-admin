@@ -252,25 +252,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deleteSucursal = (id: string) =>
     saveSucursales(sucursales.filter((x) => x.id !== id));
 
-  /* ── load from Supabase on mount + polling every 3 seconds ── */
-  /* reset state when tenant changes (logout / switch account) */
+  /* ── load from Supabase — reinicia cuando cambia el tenant ── */
   useEffect(() => {
     if (!IS_ONLINE || authLoading) return;
-    /* sin sesión activa → limpiar y salir */
-    if (authUser === null && !authLoading) {
-      setDeceased([]);
-      setServices([]);
-      setUsers([]);
-      setConvenios([]);
-      setCatalog([]);
-      setInventory([]);
-      setInventoryLog([]);
-      setSucursales([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
 
     const loadAllData = async () => {
       /* C4 — no sobreescribir mientras hay escrituras pendientes */
@@ -318,7 +302,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [tenantId, authLoading, authUser]);
+    // tenantId en deps → reinicia el polling cuando cambia de cuenta
+    // authLoading en deps → espera a que auth resuelva antes de cargar
+  }, [tenantId, authLoading]);
 
   /* ── helper: update deceased + persist JSONB arrays ── */
   const updDeceased = (id: string, patch: Partial<DeceasedRecord>) => {
