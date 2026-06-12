@@ -1,26 +1,24 @@
 import { useState } from "react";
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const inputCls =
   "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent transition-all";
 
-export default function Login({ isFirstTime }: { isFirstTime: boolean }) {
-  const { login, setupMaestro } = useAuth();
+// isFirstTime mantenido por compatibilidad pero ya no se usa
+export default function Login({
+  isFirstTime: _isFirstTime,
+}: {
+  isFirstTime: boolean;
+}) {
+  const { login } = useAuth();
 
-  /* login */
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  /* setup maestro */
-  const [mode, setMode] = useState<"login" | "setup">(
-    isFirstTime ? "setup" : "login",
-  );
-  const [fullName, setFullName] = useState("");
-  const [confirmPw, setConfirmPw] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,23 +26,6 @@ export default function Login({ isFirstTime }: { isFirstTime: boolean }) {
     setLoading(true);
     const err = await login(email, password);
     if (err) setError("Correo o contraseña incorrectos.");
-    setLoading(false);
-  };
-
-  const handleSetup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (password !== confirmPw) {
-      setError("Las contraseñas no coinciden.");
-      return;
-    }
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
-    setLoading(true);
-    const err = await setupMaestro(email, password, fullName);
-    if (err) setError(err);
     setLoading(false);
   };
 
@@ -112,40 +93,14 @@ export default function Login({ isFirstTime }: { isFirstTime: boolean }) {
             </text>
           </svg>
 
-          <h1 className="text-white font-semibold text-lg">
-            {mode === "login" ? "Iniciar sesión" : "Configuración inicial"}
-          </h1>
+          <h1 className="text-white font-semibold text-lg">Iniciar sesión</h1>
           <p className="text-white/40 text-sm mt-1">
-            {mode === "login"
-              ? "Ingresa tus credenciales para continuar"
-              : "Crea el usuario Maestro para comenzar"}
+            Ingresa tus credenciales para continuar
           </p>
         </div>
 
         {/* Form */}
-        <form
-          onSubmit={mode === "login" ? handleLogin : handleSetup}
-          className="space-y-4"
-        >
-          {/* Nombre completo (solo setup) */}
-          {mode === "setup" && (
-            <div className="relative">
-              <User
-                size={15}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30"
-              />
-              <input
-                className={inputCls + " pl-11"}
-                type="text"
-                placeholder="Nombre completo"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                autoFocus
-              />
-            </div>
-          )}
-
+        <form onSubmit={handleLogin} className="space-y-4">
           {/* Email */}
           <div className="relative">
             <Mail
@@ -159,7 +114,7 @@ export default function Login({ isFirstTime }: { isFirstTime: boolean }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              autoFocus={mode === "login"}
+              autoFocus
             />
           </div>
 
@@ -186,24 +141,6 @@ export default function Login({ isFirstTime }: { isFirstTime: boolean }) {
             </button>
           </div>
 
-          {/* Confirmar contraseña (solo setup) */}
-          {mode === "setup" && (
-            <div className="relative">
-              <Lock
-                size={15}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30"
-              />
-              <input
-                className={inputCls + " pl-11"}
-                type={showPw ? "text" : "password"}
-                placeholder="Confirmar contraseña"
-                value={confirmPw}
-                onChange={(e) => setConfirmPw(e.target.value)}
-                required
-              />
-            </div>
-          )}
-
           {/* Error */}
           {error && (
             <div className="rounded-xl px-4 py-3 text-sm text-red-300 bg-red-500/10 border border-red-500/20">
@@ -221,43 +158,21 @@ export default function Login({ isFirstTime }: { isFirstTime: boolean }) {
               color: "#0A1628",
             }}
           >
-            {loading
-              ? "Procesando…"
-              : mode === "login"
-                ? "Ingresar"
-                : "Crear usuario Maestro"}
+            {loading ? "Ingresando…" : "Ingresar"}
           </button>
         </form>
 
-        {/* Toggle setup link (solo si no es first time) */}
-        {!isFirstTime && (
-          <p className="text-center text-white/30 text-xs mt-6">
-            {mode === "login" ? (
-              <>
-                ¿Primer uso?{" "}
-                <button
-                  onClick={() => {
-                    setMode("setup");
-                    setError(null);
-                  }}
-                  className="text-white/50 hover:text-gold-400 underline transition-colors"
-                >
-                  Configurar acceso maestro
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => {
-                  setMode("login");
-                  setError(null);
-                }}
-                className="text-white/50 hover:text-gold-400 underline transition-colors"
-              >
-                ← Volver al login
-              </button>
-            )}
-          </p>
-        )}
+        {/* Link a registro de nueva funeraria */}
+        <p className="text-center text-white/30 text-xs mt-6">
+          ¿Tu funeraria aún no tiene cuenta?{" "}
+          <Link
+            to="/registro"
+            className="underline transition-colors"
+            style={{ color: "#C9A96E" }}
+          >
+            Registrar funeraria
+          </Link>
+        </p>
 
         <p className="text-center text-white/20 text-xs mt-8">
           Veladesk © {new Date().getFullYear()}

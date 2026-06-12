@@ -328,6 +328,12 @@ export const dbConvenios = {
   },
 };
 
+/* ─── tenant activo (se setea desde AuthContext al autenticar) ─ */
+export let currentTenantId: string | null = null;
+export function setCurrentTenantId(id: string | null) {
+  currentTenantId = id;
+}
+
 /* ─── colecciones genéricas ────────────────────────── */
 export const dbCollections = {
   get: async <T>(key: string, def: T): Promise<T> => {
@@ -340,11 +346,17 @@ export const dbCollections = {
     return data.data as T;
   },
   set: async <T>(key: string, value: T): Promise<void> => {
-    const { error } = await supabase.from("veladesk_collections").upsert({
+    const row: Record<string, unknown> = {
       key,
       data: value,
       updated_at: new Date().toISOString(),
-    });
+    };
+    /* incluir tenant_id explícito para que el upsert (key, tenant_id) funcione */
+    if (currentTenantId) row.tenant_id = currentTenantId;
+
+    const { error } = await supabase
+      .from("veladesk_collections")
+      .upsert(row, { onConflict: "key,tenant_id" });
     if (error) throw error;
   },
 };

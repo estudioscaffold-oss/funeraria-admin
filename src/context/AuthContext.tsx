@@ -7,10 +7,12 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { setCurrentTenantId } from "../lib/db";
 import type { UserRole } from "../types";
 
 interface AuthUser {
   id: string;
+  tenantId: string;
   email: string;
   fullName: string;
   role: UserRole;
@@ -28,6 +30,7 @@ interface AuthContextType {
     password: string,
     fullName: string,
   ) => Promise<string | null>;
+  refreshProfile: () => Promise<void>;
   isMaestro: boolean;
 }
 
@@ -42,12 +45,15 @@ export function useAuth() {
 async function fetchProfile(user: User): Promise<AuthUser | null> {
   const { data } = await supabase
     .from("staff_users")
-    .select("id,full_name,role,deceased_id")
+    .select("id,tenant_id,full_name,role,deceased_id")
     .eq("email", user.email)
     .maybeSingle();
   if (!data) return null;
+  /* sincronizar tenant activo para que dbCollections lo incluya en upserts */
+  setCurrentTenantId(data.tenant_id ?? null);
   return {
-    id: data.id, // ID de staff_users (el mismo que usan las asignaciones)
+    id: data.id,
+    tenantId: data.tenant_id ?? "",
     email: user.email ?? "",
     fullName: data.full_name,
     role: data.role as UserRole,
@@ -97,8 +103,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    setCurrentTenantId(null);
     await supabase.auth.signOut();
     setAuthUser(null);
+  };
+
+  const refreshProfile = async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user) {
+      const profile = await fetchProfile(data.session.user);
+      setAuthUser(profile);
+    }
   };
 
   const setupMaestro = async (
@@ -135,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         setupMaestro,
+        refreshProfile,
         isMaestro: authUser?.role === "maestro",
       }}
     >

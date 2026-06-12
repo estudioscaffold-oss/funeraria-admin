@@ -18,6 +18,7 @@ import Finanzas from "./pages/Finanzas";
 import Flota from "./pages/Flota";
 import Inventario from "./pages/Inventario";
 import Login from "./pages/Login";
+import Registro from "./pages/Registro";
 import FamiliaPortal from "./pages/FamiliaPortal";
 import TecnicoPortal from "./pages/TecnicoPortal";
 import { getAllowedRoutes, type NavRoute } from "./lib/permissions";
@@ -126,68 +127,75 @@ function LoadingScreen() {
 
 /* ── Guard + rutas ───────────────────────────────── */
 function AppRoutes() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* públicas */}
+        <Route path="/registro" element={<Registro />} />
+        <Route path="/login" element={<Login isFirstTime={false} />} />
+
+        {/* protegidas */}
+        <Route path="*" element={<PrivateRoutes />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+/* ── Rutas privadas (requieren sesión) ──────────── */
+function PrivateRoutes() {
   const { loading: appLoading } = useApp();
   const { session, loading: authLoading, authUser } = useAuth();
 
   if (authLoading || appLoading) return <LoadingScreen />;
 
-  // No hay sesión → login
-  if (!session) {
-    return <Login isFirstTime={false} />;
-  }
+  // Sin sesión → login (con link a /registro)
+  if (!session) return <Navigate to="/login" replace />;
 
-  // Rol familia → portal independiente (sin Layout admin)
-  if (authUser?.role === "familia") {
-    return <FamiliaPortal />;
-  }
+  // Rol familia → portal independiente
+  if (authUser?.role === "familia") return <FamiliaPortal />;
 
-  // Rol equipo_tecnico → portal operacional propio
-  if (authUser?.role === "equipo_tecnico") {
-    return <TecnicoPortal />;
-  }
+  // Rol equipo_tecnico → portal móvil
+  if (authUser?.role === "equipo_tecnico") return <TecnicoPortal />;
 
-  // Sesión pero sin perfil en staff_users → usuario borrado o sin perfil aún
-  if (!authUser) {
-    return <NoPerfil onLogout={() => supabase.auth.signOut()} />;
-  }
+  // Sesión sin perfil → aún no completó el registro (RPC pendiente)
+  if (!authUser) return <NoPerfil onLogout={() => supabase.auth.signOut()} />;
 
-  const allowed = new Set<string>(getAllowedRoutes(authUser!.role));
+  const allowed = new Set<string>(getAllowedRoutes(authUser.role));
   const allow = (route: NavRoute, el: React.ReactElement) =>
     allowed.has(route) ? el : <Navigate to="/" replace />;
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/progreso" element={allow("/progreso", <Progress />)} />
-          <Route
-            path="/fallecidos"
-            element={allow("/fallecidos", <DeceasedList />)}
-          />
-          <Route
-            path="/fallecidos/nuevo"
-            element={allow("/fallecidos", <DeceasedForm />)}
-          />
-          <Route
-            path="/fallecidos/:id"
-            element={allow("/fallecidos", <DeceasedDetail />)}
-          />
-          <Route
-            path="/fallecidos/:id/editar"
-            element={allow("/fallecidos", <DeceasedForm />)}
-          />
-          <Route path="/clientes" element={allow("/clientes", <Clientes />)} />
-          <Route path="/finanzas" element={allow("/finanzas", <Finanzas />)} />
-          <Route path="/flota" element={allow("/flota", <Flota />)} />
-          <Route
-            path="/inventario"
-            element={allow("/inventario", <Inventario />)}
-          />
-          <Route path="/admin" element={allow("/admin", <Admin />)} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/progreso" element={allow("/progreso", <Progress />)} />
+        <Route
+          path="/fallecidos"
+          element={allow("/fallecidos", <DeceasedList />)}
+        />
+        <Route
+          path="/fallecidos/nuevo"
+          element={allow("/fallecidos", <DeceasedForm />)}
+        />
+        <Route
+          path="/fallecidos/:id"
+          element={allow("/fallecidos", <DeceasedDetail />)}
+        />
+        <Route
+          path="/fallecidos/:id/editar"
+          element={allow("/fallecidos", <DeceasedForm />)}
+        />
+        <Route path="/clientes" element={allow("/clientes", <Clientes />)} />
+        <Route path="/finanzas" element={allow("/finanzas", <Finanzas />)} />
+        <Route path="/flota" element={allow("/flota", <Flota />)} />
+        <Route
+          path="/inventario"
+          element={allow("/inventario", <Inventario />)}
+        />
+        <Route path="/admin" element={allow("/admin", <Admin />)} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
   );
 }
 
