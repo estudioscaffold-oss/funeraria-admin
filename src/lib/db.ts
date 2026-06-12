@@ -259,7 +259,7 @@ export const dbUsers = {
   },
 
   upsert: async (u: AppUser): Promise<void> => {
-    const { error } = await supabase.from("staff_users").upsert({
+    const row: Record<string, unknown> = {
       id: u.id,
       full_name: u.fullName,
       email: u.email,
@@ -269,7 +269,10 @@ export const dbUsers = {
       active: u.active,
       deceased_id: u.deceasedId ?? null,
       created_at: u.createdAt,
-    });
+    };
+    /* incluir tenant_id para que el INSERT pase la política RLS */
+    if (currentTenantId) row.tenant_id = currentTenantId;
+    const { error } = await supabase.from("staff_users").upsert(row);
     if (error) throw error;
   },
 
