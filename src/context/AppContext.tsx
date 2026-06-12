@@ -256,7 +256,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   /* reset state when tenant changes (logout / switch account) */
   useEffect(() => {
     if (!IS_ONLINE || authLoading) return;
-    if (!tenantId) {
+    /* sin sesión activa → limpiar y salir */
+    if (authUser === null && !authLoading) {
       setDeceased([]);
       setServices([]);
       setUsers([]);
@@ -317,7 +318,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [tenantId, authLoading]);
+  }, [tenantId, authLoading, authUser]);
 
   /* ── helper: update deceased + persist JSONB arrays ── */
   const updDeceased = (id: string, patch: Partial<DeceasedRecord>) => {

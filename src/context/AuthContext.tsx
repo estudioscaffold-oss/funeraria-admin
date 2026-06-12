@@ -43,11 +43,23 @@ export function useAuth() {
 }
 
 async function fetchProfile(user: User): Promise<AuthUser | null> {
-  const { data } = await supabase
+  /* intento primario: por email */
+  let { data } = await supabase
     .from("staff_users")
     .select("id,tenant_id,full_name,role,deceased_id")
     .eq("email", user.email)
     .maybeSingle();
+
+  /* fallback: por id (auth.uid) — cubre casos donde RLS bloquea por email */
+  if (!data) {
+    const res = await supabase
+      .from("staff_users")
+      .select("id,tenant_id,full_name,role,deceased_id")
+      .eq("id", user.id)
+      .maybeSingle();
+    data = res.data;
+  }
+
   if (!data) return null;
   /* sincronizar tenant activo para que dbCollections lo incluya en upserts */
   setCurrentTenantId(data.tenant_id ?? null);
