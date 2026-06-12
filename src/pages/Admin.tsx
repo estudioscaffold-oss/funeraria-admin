@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useCollection } from "../hooks/useCollection";
 import { useApp } from "../context/AppContext";
+import PersonalPage from "../pages/Personal";
 import {
   Plus,
   Edit,
@@ -25,6 +26,7 @@ import {
   Package,
   ListChecks,
   Search,
+  UserCheck,
 } from "lucide-react";
 import type {
   AppUser,
@@ -492,6 +494,7 @@ import { useAuth } from "../context/AuthContext";
 const TABS = [
   { id: "perfil", label: "Perfil", icon: Building2 },
   { id: "usuarios", label: "Usuarios", icon: Users },
+  { id: "personal", label: "Personal", icon: UserCheck },
   { id: "convenios", label: "Convenios", icon: Handshake },
   { id: "servicios", label: "Servicios", icon: Tag },
   { id: "categorias", label: "Categorías", icon: Layers },
@@ -4554,6 +4557,7 @@ export default function Admin() {
       <div className="flex-1 overflow-auto p-6">
         {activeTab === "perfil" && <TabPerfil />}
         {activeTab === "usuarios" && <TabUsuarios />}
+        {activeTab === "personal" && <PersonalPage />}
         {activeTab === "convenios" && <TabConvenios />}
         {activeTab === "servicios" && <TabServicios />}
         {activeTab === "categorias" && <TabCategorias />}

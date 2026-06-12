@@ -14,7 +14,6 @@ import DeceasedDetail from "./pages/DeceasedDetail";
 import DeceasedForm from "./pages/DeceasedForm";
 import Admin from "./pages/Admin";
 import Clientes from "./pages/Clientes";
-import Personal from "./pages/Personal";
 import Finanzas from "./pages/Finanzas";
 import Flota from "./pages/Flota";
 import Inventario from "./pages/Inventario";
@@ -173,7 +172,6 @@ function AppRoutes() {
             element={allow("/fallecidos", <DeceasedForm />)}
           />
           <Route path="/clientes" element={allow("/clientes", <Clientes />)} />
-          <Route path="/personal" element={allow("/personal", <Personal />)} />
           <Route path="/finanzas" element={allow("/finanzas", <Finanzas />)} />
           <Route path="/flota" element={allow("/flota", <Flota />)} />
           <Route

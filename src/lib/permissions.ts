@@ -6,7 +6,6 @@ export type NavRoute =
   | "/clientes"
   | "/fallecidos"
   | "/inventario"
-  | "/personal"
   | "/finanzas"
   | "/flota"
   | "/admin";
@@ -14,6 +13,7 @@ export type NavRoute =
 export type AdminTab =
   | "perfil"
   | "usuarios"
+  | "personal"
   | "convenios"
   | "servicios"
   | "categorias"
@@ -28,7 +28,6 @@ const ALL_ROUTES: NavRoute[] = [
   "/clientes",
   "/fallecidos",
   "/inventario",
-  "/personal",
   "/finanzas",
   "/flota",
   "/admin",
@@ -37,6 +36,7 @@ const ALL_ROUTES: NavRoute[] = [
 const ALL_ADMIN_TABS: AdminTab[] = [
   "perfil",
   "usuarios",
+  "personal",
   "convenios",
   "servicios",
   "categorias",
