@@ -33,9 +33,13 @@ create table if not exists deceased_records (
   budgets               jsonb default '[]'::jsonb,
   payments              jsonb default '[]'::jsonb,
   tasks                 jsonb default '[]'::jsonb,
+  contract_signature    jsonb,
   created_at            text,
   updated_at            text
 );
+
+-- Agrega columna si la tabla ya existe
+alter table deceased_records add column if not exists contract_signature jsonb;
 
 -- 2. Servicios del calendario
 create table if not exists funeral_services (

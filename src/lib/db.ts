@@ -42,6 +42,7 @@ const toDB = (r: DeceasedRecord): Record<string, any> => ({
   budgets: r.budgets,
   payments: r.payments,
   tasks: r.tasks,
+  contract_signature: r.contractSignature ?? null,
   created_at: r.createdAt,
   updated_at: r.updatedAt,
 });
@@ -83,6 +84,7 @@ const fromDB = (r: Record<string, any>): DeceasedRecord => ({
   budgets: r.budgets ?? [],
   payments: r.payments ?? [],
   tasks: r.tasks ?? [],
+  contractSignature: r.contract_signature ?? undefined,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 });
@@ -147,6 +149,8 @@ export const dbDeceased = {
     if (patch.budgets !== undefined) dbPatch.budgets = patch.budgets;
     if (patch.payments !== undefined) dbPatch.payments = patch.payments;
     if (patch.tasks !== undefined) dbPatch.tasks = patch.tasks;
+    if (patch.contractSignature !== undefined)
+      dbPatch.contract_signature = patch.contractSignature ?? null;
     dbPatch.updated_at = new Date().toISOString();
     void full;
     const { error } = await supabase
