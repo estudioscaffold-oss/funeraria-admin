@@ -3,7 +3,6 @@ import {
   CheckCircle2,
   Circle,
   Clock,
-  Download,
   Phone,
   MessageCircle,
   ChevronDown,
@@ -13,10 +12,10 @@ import {
   Heart,
   FileText,
   Package,
-  AlertCircle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useApp } from "../context/AppContext";
+import { ContractSection } from "../components/deceased/ContractDocument";
 import type { ProcessStatus, DeceasedRecord } from "../types";
 
 /* ── Etapas del servicio ─────────────────────────── */
@@ -574,36 +573,8 @@ export default function FamiliaPortal() {
           )}
         </div>
 
-        {/* ── Documentos ─────────────────────── */}
-        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
-          <div className="px-4 py-3.5 border-b border-stone-50">
-            <div className="flex items-center gap-2">
-              <FileText size={14} style={{ color: "#A07840" }} />
-              <span className="text-sm font-semibold text-stone-800">
-                Documentos
-              </span>
-            </div>
-          </div>
-          <div className="p-4 space-y-2">
-            <DocButton
-              label="Contrato de servicios"
-              sublabel="PDF · Firmado"
-              available={false}
-            />
-            <DocButton
-              label="Presupuesto aprobado"
-              sublabel="PDF"
-              available={false}
-            />
-          </div>
-          <div className="mx-4 mb-4 flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
-            <AlertCircle size={13} className="text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-700">
-              Los documentos estarán disponibles una vez que el servicio esté
-              completado. Tu asesor te notificará.
-            </p>
-          </div>
-        </div>
+        {/* ── Contrato de servicios ──────────── */}
+        <ContractSection record={linkedDeceased} canSign />
 
         {/* ── Contacto ───────────────────────── */}
         <div
@@ -673,47 +644,5 @@ function InfoRow({
       <div className="shrink-0 mt-0.5">{icon}</div>
       <div>{children}</div>
     </div>
-  );
-}
-
-function DocButton({
-  label,
-  sublabel,
-  available,
-}: {
-  label: string;
-  sublabel: string;
-  available: boolean;
-}) {
-  return (
-    <button
-      disabled={!available}
-      className="w-full flex items-center justify-between px-3 py-3 rounded-xl border transition-colors"
-      style={{
-        borderColor: available ? "rgba(160,120,64,0.3)" : "#E7E5E4",
-        background: available ? "rgba(160,120,64,0.04)" : "#FAFAF9",
-        opacity: available ? 1 : 0.6,
-      }}
-    >
-      <div className="flex items-center gap-2.5 text-left">
-        <FileText
-          size={16}
-          style={{ color: available ? "#A07840" : "#A8A29E" }}
-        />
-        <div>
-          <p
-            className="text-sm font-medium"
-            style={{ color: available ? "#1C1917" : "#78716C" }}
-          >
-            {label}
-          </p>
-          <p className="text-xs text-stone-400">{sublabel}</p>
-        </div>
-      </div>
-      <Download
-        size={15}
-        style={{ color: available ? "#A07840" : "#D6D3D1" }}
-      />
-    </button>
   );
 }

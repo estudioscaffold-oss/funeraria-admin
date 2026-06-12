@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import OrdenServicioPDF from "../components/pdf/OrdenServicioPDF";
+import { ContractSection } from "../components/deceased/ContractDocument";
 import {
   STATUS_LABELS,
   STATUS_COLORS,
@@ -252,6 +253,9 @@ function TabDocumentos({ d }: { d: ReturnType<typeof useApp>["deceased"][0] }) {
 
   return (
     <div className="space-y-4">
+      {/* ── Contrato de servicio ── */}
+      <ContractSection record={d} compact />
+
       <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-5">
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1.5">

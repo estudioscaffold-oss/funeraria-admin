@@ -345,6 +345,13 @@ export interface DeceasedRecord {
   createdAt: string;
   updatedAt: string;
   assignedStaff?: string;
+  /* ── Contrato ── */
+  contractSignature?: {
+    signerName: string;
+    signerRut: string;
+    signatureData: string; // base64 canvas
+    signedAt: string;
+  };
 }
 
 export interface FuneralService {
