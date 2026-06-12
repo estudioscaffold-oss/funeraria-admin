@@ -20,7 +20,7 @@ import Inventario from "./pages/Inventario";
 import Login from "./pages/Login";
 import FamiliaPortal from "./pages/FamiliaPortal";
 import { getAllowedRoutes, type NavRoute } from "./lib/permissions";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 /* ── Pantalla de carga ───────────────────────────── */
 function LoadingScreen() {
@@ -146,65 +146,39 @@ function AppRoutes() {
   }
 
   const allowed = new Set<string>(getAllowedRoutes(authUser!.role));
-
-  function Guard({
-    route,
-    element,
-  }: {
-    route: NavRoute;
-    element: React.ReactElement;
-  }) {
-    const loc = useLocation();
-    if (!allowed.has(route))
-      return <Navigate to="/" replace state={{ from: loc }} />;
-    return element;
-  }
+  const allow = (route: NavRoute, el: React.ReactElement) =>
+    allowed.has(route) ? el : <Navigate to="/" replace />;
 
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
-          <Route
-            path="/progreso"
-            element={<Guard route="/progreso" element={<Progress />} />}
-          />
+          <Route path="/progreso" element={allow("/progreso", <Progress />)} />
           <Route
             path="/fallecidos"
-            element={<Guard route="/fallecidos" element={<DeceasedList />} />}
+            element={allow("/fallecidos", <DeceasedList />)}
           />
           <Route
             path="/fallecidos/nuevo"
-            element={<Guard route="/fallecidos" element={<DeceasedForm />} />}
+            element={allow("/fallecidos", <DeceasedForm />)}
           />
           <Route
             path="/fallecidos/:id"
-            element={<Guard route="/fallecidos" element={<DeceasedDetail />} />}
+            element={allow("/fallecidos", <DeceasedDetail />)}
           />
           <Route
             path="/fallecidos/:id/editar"
-            element={<Guard route="/fallecidos" element={<DeceasedForm />} />}
+            element={allow("/fallecidos", <DeceasedForm />)}
           />
-          <Route
-            path="/personal"
-            element={<Guard route="/personal" element={<Personal />} />}
-          />
-          <Route
-            path="/finanzas"
-            element={<Guard route="/finanzas" element={<Finanzas />} />}
-          />
-          <Route
-            path="/flota"
-            element={<Guard route="/flota" element={<Flota />} />}
-          />
+          <Route path="/personal" element={allow("/personal", <Personal />)} />
+          <Route path="/finanzas" element={allow("/finanzas", <Finanzas />)} />
+          <Route path="/flota" element={allow("/flota", <Flota />)} />
           <Route
             path="/inventario"
-            element={<Guard route="/inventario" element={<Inventario />} />}
+            element={allow("/inventario", <Inventario />)}
           />
-          <Route
-            path="/admin"
-            element={<Guard route="/admin" element={<Admin />} />}
-          />
+          <Route path="/admin" element={allow("/admin", <Admin />)} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -5,8 +5,20 @@ import type { ProcessTask, TaskResource } from "../types";
 import {
   generateDefaultTasks,
   SERVICE_LABELS,
+  STATUS_LABELS,
+  STATUS_COLORS,
   VENDEDORES,
 } from "../utils/mockData";
+
+const PROCESS_STEPS = [
+  { key: "recepcion", label: "Recepción" },
+  { key: "preparacion", label: "Preparación" },
+  { key: "velatorio", label: "Velatorio" },
+  { key: "traslado", label: "Traslado" },
+  { key: "ceremonia", label: "Ceremonia" },
+  { key: "inhumacion_cremacion", label: "Inhumación" },
+  { key: "completado", label: "Completado" },
+];
 import { format, differenceInMinutes, differenceInHours } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -855,24 +867,41 @@ function DeceasedCard({
             </p>
           </div>
 
-          {/* task progress chips */}
-          <div className="hidden md:flex items-center gap-2 shrink-0">
-            {tasks.length > 0 && (
-              <>
-                <div className="flex items-center gap-1.5 bg-slate-100 rounded-full px-3 py-1">
-                  {tasks.slice(0, 8).map((t) => (
+          {/* stage stepper — same as DeceasedDetail TabProgreso */}
+          <div className="hidden md:flex flex-col items-end gap-1 shrink-0">
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[d.status] ?? "bg-slate-100 text-slate-600"}`}
+            >
+              {STATUS_LABELS[d.status] ?? d.status}
+            </span>
+            <div className="flex items-center">
+              {PROCESS_STEPS.map((step, idx) => {
+                const currentIdx = PROCESS_STEPS.findIndex(
+                  (s) => s.key === d.status,
+                );
+                const done = idx < currentIdx;
+                const active = idx === currentIdx;
+                return (
+                  <div key={step.key} className="flex items-center">
                     <div
-                      key={t.id}
-                      className={`w-2.5 h-2.5 rounded-full ${t.status === "completado" ? tc(t.order).bg : t.status === "en_curso" ? tc(t.order).bg + " opacity-60 animate-pulse" : "bg-slate-300"}`}
-                      title={t.name}
+                      title={step.label}
+                      className={`w-2.5 h-2.5 rounded-full border transition-all ${
+                        done
+                          ? "bg-indigo-500 border-indigo-500"
+                          : active
+                            ? "bg-white border-indigo-500 ring-2 ring-indigo-100"
+                            : "bg-white border-slate-300"
+                      }`}
                     />
-                  ))}
-                </div>
-                <span className="text-xs text-slate-500 font-medium">
-                  {done}/{tasks.length}
-                </span>
-              </>
-            )}
+                    {idx < PROCESS_STEPS.length - 1 && (
+                      <div
+                        className={`w-3 h-0.5 ${done ? "bg-indigo-400" : "bg-slate-200"}`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* urgency badge + countdown */}
