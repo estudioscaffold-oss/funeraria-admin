@@ -13,8 +13,6 @@ import {
   Car,
   Shield,
   FileText,
-  Gauge,
-  User2,
   Truck,
   Bus,
   Settings2,
@@ -25,15 +23,50 @@ import { es } from "date-fns/locale";
 /* ═══ CONFIG ══════════════════════════════════════ */
 const TYPE_CFG: Record<
   VehicleType,
-  { label: string; Icon: React.ElementType; accent: string }
+  {
+    label: string;
+    Icon: React.ElementType;
+    accent: string;
+    photo: string | null;
+  }
 > = {
-  carroza_funebre: { label: "Carroza Fúnebre", Icon: Car, accent: "#64748B" },
-  furgon: { label: "Furgón", Icon: Truck, accent: "#3B82F6" },
-  automovil: { label: "Automóvil", Icon: Car, accent: "#6366F1" },
-  camioneta: { label: "Camioneta", Icon: Truck, accent: "#0EA5E9" },
-  carruaje: { label: "Carruaje", Icon: Settings2, accent: "#D97706" },
-  minibus: { label: "Minibús", Icon: Bus, accent: "#8B5CF6" },
-  otro: { label: "Otro", Icon: Car, accent: "#94A3B8" },
+  carroza_funebre: {
+    label: "Carroza Fúnebre",
+    Icon: Car,
+    accent: "#64748B",
+    photo: "/vehicles/carroza_funebre.jpeg",
+  },
+  furgon: {
+    label: "Furgón",
+    Icon: Truck,
+    accent: "#3B82F6",
+    photo: "/vehicles/furgon.jpeg",
+  },
+  automovil: {
+    label: "Automóvil",
+    Icon: Car,
+    accent: "#6366F1",
+    photo: "/vehicles/automovil.jpeg",
+  },
+  camioneta: {
+    label: "Camioneta",
+    Icon: Truck,
+    accent: "#0EA5E9",
+    photo: "/vehicles/camioneta.jpeg",
+  },
+  carruaje: {
+    label: "Carruaje",
+    Icon: Settings2,
+    accent: "#D97706",
+    photo: "/vehicles/carruaje.jpeg",
+  },
+  minibus: {
+    label: "Minibús",
+    Icon: Bus,
+    accent: "#8B5CF6",
+    photo: "/vehicles/minibus.jpeg",
+  },
+  otro: { label: "Otro", Icon: Car, accent: "#94A3B8", photo: null },
 };
 
 const STATUS_CFG: Record<
@@ -171,6 +204,126 @@ function Plate({ plate }: { plate: string }) {
   );
 }
 
+/* ═══ VEHICLE PHOTO BANNER ════════════════════════ */
+function VehiclePhoto({
+  type,
+  status,
+  hasAlert,
+  onEdit,
+  onDelete,
+}: {
+  type: (typeof TYPE_CFG)[VehicleType];
+  status: (typeof STATUS_CFG)[VehicleStatus];
+  hasAlert: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div
+      className="relative overflow-hidden"
+      style={{ height: 148, borderRadius: "14px 14px 0 0" }}
+    >
+      {type.photo ? (
+        <img
+          src={type.photo}
+          alt={type.label}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      ) : (
+        /* placeholder para "otro" */
+        <div
+          className="w-full h-full flex items-center justify-center"
+          style={{ background: `${type.accent}18` }}
+        >
+          <type.Icon
+            size={48}
+            style={{ color: `${type.accent}60` }}
+            strokeWidth={1.2}
+          />
+        </div>
+      )}
+
+      {/* degradado inferior para legibilidad */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.55) 100%)",
+        }}
+      />
+
+      {/* status bar inferior sobre la foto */}
+      <div
+        className="absolute bottom-0 left-0 right-0"
+        style={{ height: 3, background: status.bar }}
+      />
+
+      {/* tipo label — esquina inferior izquierda */}
+      <div className="absolute bottom-4 left-4">
+        <span
+          className="text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm"
+          style={{
+            background: "rgba(0,0,0,0.35)",
+            color: "white",
+            border: "1px solid rgba(255,255,255,0.15)",
+          }}
+        >
+          {type.label}
+        </span>
+      </div>
+
+      {/* acciones — esquina superior derecha */}
+      <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        {hasAlert && (
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{
+              background: "rgba(245,158,11,0.9)",
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            <AlertTriangle size={13} color="white" />
+          </div>
+        )}
+        <button
+          onClick={onEdit}
+          className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+          style={{
+            background: "rgba(255,255,255,0.85)",
+            backdropFilter: "blur(4px)",
+          }}
+          onMouseEnter={(e) =>
+            ((e.currentTarget as HTMLElement).style.background = "white")
+          }
+          onMouseLeave={(e) =>
+            ((e.currentTarget as HTMLElement).style.background =
+              "rgba(255,255,255,0.85)")
+          }
+        >
+          <Pencil size={12} style={{ color: "#0A1628" }} />
+        </button>
+        <button
+          onClick={onDelete}
+          className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+          style={{
+            background: "rgba(255,255,255,0.85)",
+            backdropFilter: "blur(4px)",
+          }}
+          onMouseEnter={(e) =>
+            ((e.currentTarget as HTMLElement).style.background = "#FEF2F2")
+          }
+          onMouseLeave={(e) =>
+            ((e.currentTarget as HTMLElement).style.background =
+              "rgba(255,255,255,0.85)")
+          }
+        >
+          <Trash2 size={12} style={{ color: "#EF4444" }} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ═══ VEHICLE CARD ════════════════════════════════ */
 function VehicleCard({
   vehicle,
@@ -203,8 +356,8 @@ function VehicleCard({
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.boxShadow =
-          "0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)";
-        (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+          "0 8px 32px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06)";
+        (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)";
       }}
       onMouseLeave={(e) => {
         (e.currentTarget as HTMLElement).style.boxShadow =
@@ -212,90 +365,35 @@ function VehicleCard({
         (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
       }}
     >
-      {/* status accent bar top */}
-      <div
-        style={{
-          height: 3,
-          background: status.bar,
-          borderRadius: "14px 14px 0 0",
-        }}
+      {/* ── foto banner ── */}
+      <VehiclePhoto
+        type={type}
+        status={status}
+        hasAlert={hasAlert}
+        onEdit={onEdit}
+        onDelete={onDelete}
       />
 
       <div className="px-5 pt-4 pb-5">
-        {/* row 1: icon + brand/model + alert */}
-        <div className="flex items-start gap-3 mb-4">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: `${type.accent}12` }}
-          >
-            <type.Icon
-              size={16}
-              style={{ color: type.accent }}
-              strokeWidth={1.8}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3
-                className="font-bold text-base leading-tight truncate"
-                style={{ color: "#0F172A" }}
-              >
-                {vehicle.brand}{" "}
-                <span style={{ color: "#475569" }}>{vehicle.model}</span>
-              </h3>
-              {hasAlert && (
-                <AlertTriangle size={12} style={{ color: "#F59E0B" }} />
-              )}
-            </div>
+        {/* row 1: brand/model + plate + status */}
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="min-w-0">
+            <h3
+              className="font-bold text-base leading-tight truncate"
+              style={{ color: "#0F172A" }}
+            >
+              {vehicle.brand}{" "}
+              <span style={{ color: "#475569" }}>{vehicle.model}</span>
+            </h3>
             <p
               className="text-xs mt-0.5 font-medium"
               style={{ color: "#94A3B8" }}
             >
-              {vehicle.year} · {type.label} · {vehicle.color}
+              {vehicle.year} · {vehicle.color}
             </p>
           </div>
-          {/* actions */}
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
-            <button
-              onClick={onEdit}
-              className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-              style={{ color: "#94A3B8" }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "#F1F5F9";
-                (e.currentTarget as HTMLElement).style.color = "#0A1628";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  "transparent";
-                (e.currentTarget as HTMLElement).style.color = "#94A3B8";
-              }}
-            >
-              <Pencil size={13} />
-            </button>
-            <button
-              onClick={onDelete}
-              className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-              style={{ color: "#94A3B8" }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "#FEF2F2";
-                (e.currentTarget as HTMLElement).style.color = "#EF4444";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  "transparent";
-                (e.currentTarget as HTMLElement).style.color = "#94A3B8";
-              }}
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-        </div>
-
-        {/* row 2: plate + status */}
-        <div className="flex items-center justify-between mb-4">
-          <Plate plate={vehicle.plate} />
           <span
-            className="flex items-center gap-1.5 text-xs font-semibold"
+            className="flex items-center gap-1.5 text-xs font-semibold shrink-0 mt-0.5"
             style={{ color: status.text }}
           >
             <span
@@ -306,26 +404,28 @@ function VehicleCard({
           </span>
         </div>
 
+        {/* patente */}
+        <div className="mb-4">
+          <Plate plate={vehicle.plate} />
+        </div>
+
         {/* divider */}
         <div style={{ height: 1, background: "#F1F5F9", margin: "0 0 14px" }} />
 
-        {/* row 3: stats */}
+        {/* stats */}
         <div className="grid grid-cols-3 gap-0 text-center mb-4">
           {[
             {
-              icon: Gauge,
               value: vehicle.mileage
                 ? `${(vehicle.mileage / 1000).toFixed(0)}k`
                 : "—",
               label: "km",
             },
             {
-              icon: User2,
               value: vehicle.assignedTo?.split(" ")[0] ?? "—",
               label: "Conductor",
             },
             {
-              icon: Car,
               value: vehicle.fuelType ? FUEL_LABELS[vehicle.fuelType] : "—",
               label: "Combustible",
             },
@@ -347,7 +447,7 @@ function VehicleCard({
           ))}
         </div>
 
-        {/* row 4: doc rings */}
+        {/* doc rings */}
         <div style={{ height: 1, background: "#F1F5F9", margin: "0 0 14px" }} />
         <div className="flex justify-between items-start mb-4">
           <DocRing label="Permiso Circ." doc={vehicle.circulationPermit} />
@@ -356,7 +456,7 @@ function VehicleCard({
           <DocRing label="Rev. Técnica" doc={vehicle.technicalRevision} />
         </div>
 
-        {/* row 5: next service */}
+        {/* next service */}
         {vehicle.nextService && (
           <div className="flex items-center gap-2 mt-1">
             <Wrench size={11} style={{ color: "#CBD5E1" }} />
@@ -885,6 +985,57 @@ export default function Flota() {
 
             {/* panel body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+              {/* ── preview foto tipo ── */}
+              {(() => {
+                const cfg = TYPE_CFG[form.type];
+                return cfg.photo ? (
+                  <div
+                    className="relative overflow-hidden rounded-2xl"
+                    style={{ height: 140 }}
+                  >
+                    <img
+                      src={cfg.photo}
+                      alt={cfg.label}
+                      className="w-full h-full object-cover transition-all duration-500"
+                    />
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background:
+                          "linear-gradient(to bottom,rgba(0,0,0,0.04) 0%,rgba(0,0,0,0.50) 100%)",
+                      }}
+                    />
+                    <span
+                      className="absolute bottom-3 left-4 text-sm font-bold text-white"
+                      style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
+                    >
+                      {cfg.label}
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    className="rounded-2xl flex items-center justify-center gap-3"
+                    style={{
+                      height: 80,
+                      background: `${cfg.accent}10`,
+                      border: `1px dashed ${cfg.accent}40`,
+                    }}
+                  >
+                    <cfg.Icon
+                      size={24}
+                      style={{ color: cfg.accent }}
+                      strokeWidth={1.4}
+                    />
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: cfg.accent }}
+                    >
+                      {cfg.label}
+                    </span>
+                  </div>
+                );
+              })()}
+
               <section>
                 <p
                   className="text-xs font-bold uppercase tracking-widest mb-3"
