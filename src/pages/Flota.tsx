@@ -484,7 +484,7 @@ function DocFields({
 
 /* ═══ MOCK DATA ═════════════════════════════════════ */
 const emptyDoc = (): Partial<VehicleDoc> => ({});
-const MOCK_VEHICLES: Vehicle[] = [
+export const MOCK_VEHICLES: Vehicle[] = [
   {
     id: "v1",
     type: "carroza_funebre",

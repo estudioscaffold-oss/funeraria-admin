@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { useCollection } from "../hooks/useCollection";
 import type { Vehicle } from "../types";
+import { MOCK_VEHICLES } from "./Flota";
 import {
   ChevronLeft,
   Edit,
@@ -1697,26 +1698,58 @@ function TabPagos({ d }: { d: ReturnType<typeof useApp>["deceased"][0] }) {
   );
 }
 
+/* ─── Shared assignment collection ─────────────────── */
+interface DeceasedAssignment {
+  deceasedId: string;
+  technicalIds: string[];
+  vehicleIds: string[];
+}
+
+export function useDeceasedAssignment(deceasedId: string) {
+  const [all, setAll] = useCollection<DeceasedAssignment>(
+    "veladesk-asignaciones",
+    [],
+  );
+  const mine = all.find((a) => a.deceasedId === deceasedId) ?? {
+    deceasedId,
+    technicalIds: [],
+    vehicleIds: [],
+  };
+
+  const setMine = (patch: Partial<Omit<DeceasedAssignment, "deceasedId">>) => {
+    const updated = { ...mine, ...patch };
+    const exists = all.some((a) => a.deceasedId === deceasedId);
+    setAll(
+      exists
+        ? all.map((a) => (a.deceasedId === deceasedId ? updated : a))
+        : [...all, updated],
+    );
+  };
+
+  return { assignment: mine, setMine };
+}
+
 /* ─── TAB: Equipo & Flota ─────────────────────────── */
 function TabEquipo({ d }: { d: ReturnType<typeof useApp>["deceased"][0] }) {
-  const { users, updateDeceased } = useApp();
-  const [vehicles] = useCollection<Vehicle>("veladesk-flota", []);
+  const { users } = useApp();
+  const [vehicles] = useCollection<Vehicle>("veladesk-flota", MOCK_VEHICLES);
+  const { assignment, setMine } = useDeceasedAssignment(d.id);
 
   const tecnicos = users.filter((u) => u.role === "equipo_tecnico" && u.active);
-  const assigned = d.assignedTechnicalIds ?? [];
-  const assignedVeh = d.assignedVehicleIds ?? [];
+  const assigned = assignment.technicalIds;
+  const assignedVeh = assignment.vehicleIds;
 
   const toggleTecnico = (uid: string) => {
-    updateDeceased(d.id, {
-      assignedTechnicalIds: assigned.includes(uid)
+    setMine({
+      technicalIds: assigned.includes(uid)
         ? assigned.filter((x) => x !== uid)
         : [...assigned, uid],
     });
   };
 
   const toggleVehicle = (vid: string) => {
-    updateDeceased(d.id, {
-      assignedVehicleIds: assignedVeh.includes(vid)
+    setMine({
+      vehicleIds: assignedVeh.includes(vid)
         ? assignedVeh.filter((x) => x !== vid)
         : [...assignedVeh, vid],
     });
@@ -1871,8 +1904,10 @@ export default function DeceasedDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { deceased, deleteDeceased, users } = useApp();
-  const [vehicles] = useCollection<Vehicle>("veladesk-flota", []);
+  const [vehicles] = useCollection<Vehicle>("veladesk-flota", MOCK_VEHICLES);
   const [activeTab, setActiveTab] = useState("datos");
+  // Assignment hook — must be called before any conditional return
+  const { assignment } = useDeceasedAssignment(id ?? "");
 
   const d = deceased.find((x) => x.id === id);
   if (!d)
@@ -1937,12 +1972,12 @@ export default function DeceasedDetail() {
                 <OrdenServicioPDF
                   record={d}
                   teamStaff={
-                    (d.assignedTechnicalIds ?? [])
+                    assignment.technicalIds
                       .map((uid) => users.find((u) => u.id === uid)?.fullName)
                       .filter(Boolean) as string[]
                   }
                   teamVehicles={
-                    (d.assignedVehicleIds ?? [])
+                    assignment.vehicleIds
                       .map((vid) => {
                         const v = vehicles.find((x) => x.id === vid);
                         return v ? `${v.brand} ${v.model} · ${v.plate}` : null;
