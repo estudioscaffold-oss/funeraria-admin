@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -12,7 +12,7 @@ export default function Login({
 }: {
   isFirstTime: boolean;
 }) {
-  const { login } = useAuth();
+  const { login, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -20,6 +20,11 @@ export default function Login({
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  /* redirigir automáticamente cuando la sesión quede activa */
+  useEffect(() => {
+    if (!authLoading && session) navigate("/", { replace: true });
+  }, [session, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +34,8 @@ export default function Login({
     if (err) {
       setError("Correo o contraseña incorrectos.");
       setLoading(false);
-    } else {
-      navigate("/");
     }
+    // no navigate aquí — el useEffect lo hace cuando session se actualiza
   };
 
   return (
